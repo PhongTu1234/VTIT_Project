@@ -18,6 +18,8 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @SuppressWarnings("serial")
@@ -31,15 +33,18 @@ public class Users implements Serializable {
     private Integer id;
 
     @Column(nullable = false, unique = true, length = 50)
+    @NotBlank(message = "Username không được để trống")
     private String username;
 
     @Column(nullable = false, length = 255)
+    @NotBlank(message = "Password không được để trống")
     private String password;
 
     @Column(length = 100)
     private String fullname;
 
     @Column(length = 100)
+    @Email(message = "Email không đúng định dạng")
     private String email;
 
     @Column(length = 20)
