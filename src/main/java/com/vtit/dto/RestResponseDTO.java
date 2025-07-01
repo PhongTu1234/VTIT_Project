@@ -1,5 +1,8 @@
 package com.vtit.dto;
 
+import lombok.Data;
+
+@Data
 public class RestResponseDTO<T>{
 	private int statusCode;
 	private String error;

@@ -16,8 +16,8 @@ public class AuthController {
 		this.userService = userService;
 	}
 	
-	@PostMapping("/login")
-	public ResponseEntity<RestResponseDTO<T>> AuthLogin() {
-		return ResponseEntity<T>;
-	}
+//	@PostMapping("/login")
+//	public ResponseEntity<RestResponseDTO<T>> AuthLogin() {
+//		return ResponseEntity<T>;
+//	}
 }
