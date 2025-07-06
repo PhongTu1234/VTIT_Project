@@ -73,14 +73,10 @@ public class Users implements Serializable {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
-
     @PrePersist //Trước khi lưu mới (INSERT)
     protected void onCreate() {
         this.createdDate = new Date();
         if (isActive == null) isActive = true;
-        if (isDeleted == null) isDeleted = false;
     }
 
     @PreUpdate //Trước khi cập nhật (UPDATE)

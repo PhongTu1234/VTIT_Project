@@ -2,8 +2,10 @@ package com.vtit.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.vtit.dto.LoginDTO;
 import com.vtit.dto.RestResponseDTO;
 import com.vtit.service.UserService;
 
@@ -16,8 +18,8 @@ public class AuthController {
 		this.userService = userService;
 	}
 	
-//	@PostMapping("/login")
-//	public ResponseEntity<RestResponseDTO<T>> AuthLogin() {
-//		return ResponseEntity<T>;
-//	}
+	@PostMapping("/login")
+	public ResponseEntity<LoginDTO> AuthLogin(@RequestBody LoginDTO loginDTO) {
+		return ResponseEntity.ok(loginDTO);
+	}
 }

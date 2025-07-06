@@ -9,6 +9,8 @@ import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+import com.vtit.dto.RestResponseDTO;
+
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestControllerAdvice
@@ -29,7 +31,17 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
 			ServerHttpResponse response) {
 		HttpServletResponse serverResponse = ((ServletServerHttpResponse) response).getServletResponse();
 		int status = serverResponse.getStatus();
-		return body;
+		
+		RestResponseDTO<Object> res = new RestResponseDTO<>();
+		res.setStatusCode(status);
+		if(status >= 400) {
+			res.setError("CALL API FALSE");
+			res.setMessage(body);
+		}else {
+			res.setData(body);
+			res.setMessage("CALL API SUCCESS");
+		}
+		return res;
 	}
 
 }
