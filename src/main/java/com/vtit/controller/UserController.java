@@ -37,7 +37,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable Integer id) {
+    public ResponseEntity<?> getById(@PathVariable String id) {
         return userService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id " + id));
@@ -49,18 +49,13 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Users> update(@PathVariable Integer id, @Valid @RequestBody Users user) {
+    public ResponseEntity<Users> update(@PathVariable String id, @Valid @RequestBody Users user) {
         return ResponseEntity.ok(userService.update(id, user));
     }
     
     @DeleteMapping("/{id}")
-    public ResponseEntity<RestResponseDTO<Object>> delete(@PathVariable Integer id) {
+    public void delete(@PathVariable String id) {
         userService.delete(id);
-
-        RestResponseDTO<Object> response = new RestResponseDTO<>();
-        response.setStatusCode(200);
-        response.setMessage("Xóa người dùng thành công với id = " + id);
-        return ResponseEntity.ok(response);
     }
 
 }

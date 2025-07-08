@@ -72,6 +72,13 @@
 			<artifactId>httpclient</artifactId>
 			<version>4.5.14</version> <!-- Hoặc phiên bản mới hơn -->
 		</dependency>
+		<!--
+		https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-oauth2-resource-server -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+			<version>3.5.3</version>
+		</dependency>
 	</dependencies>
 
 	<build>

@@ -18,6 +18,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -25,7 +26,9 @@ import lombok.Data;
 @SuppressWarnings("serial")
 @Data
 @Entity
-@Table(name = "Users")
+@Table(name = "Users", uniqueConstraints = {
+	    @UniqueConstraint(columnNames = "email")
+	})
 public class Users implements Serializable {
 
     @Id
@@ -73,14 +76,10 @@ public class Users implements Serializable {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
-
     @PrePersist //Trước khi lưu mới (INSERT)
     protected void onCreate() {
         this.createdDate = new Date();
         if (isActive == null) isActive = true;
-        if (isDeleted == null) isDeleted = false;
     }
 
     @PreUpdate //Trước khi cập nhật (UPDATE)

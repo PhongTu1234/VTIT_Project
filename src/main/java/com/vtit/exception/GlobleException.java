@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.apache.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,12 +19,12 @@ import jakarta.persistence.EntityNotFoundException;
 @RestControllerAdvice
 public class GlobleException {
 
-    @ExceptionHandler(value = IdInvalidException.class)
-    public ResponseEntity<RestResponseDTO<Object>> handleIdException(IdInvalidException ex) {
+    @ExceptionHandler(value = {UsernameNotFoundException.class, BadCredentialsException.class})
+    public ResponseEntity<RestResponseDTO<Object>> handleIdException(Exception ex) {
         RestResponseDTO<Object> res = new RestResponseDTO<>();
         res.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-        res.setError("IdInvalidException");
-        res.setMessage(ex.getMessage());
+        res.setError(ex.getMessage());
+        res.setMessage("Exception occurs...");
         return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(res);
     }
 
