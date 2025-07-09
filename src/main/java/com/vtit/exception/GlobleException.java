@@ -19,14 +19,15 @@ import jakarta.persistence.EntityNotFoundException;
 @RestControllerAdvice
 public class GlobleException {
 
-    @ExceptionHandler(value = {UsernameNotFoundException.class, BadCredentialsException.class})
-    public ResponseEntity<RestResponseDTO<Object>> handleIdException(Exception ex) {
-        RestResponseDTO<Object> res = new RestResponseDTO<>();
-        res.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-        res.setError(ex.getMessage());
-        res.setMessage("Exception occurs...");
-        return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(res);
-    }
+	@ExceptionHandler({UsernameNotFoundException.class, BadCredentialsException.class})
+	public ResponseEntity<RestResponseDTO<Object>> handleLoginFail(Exception ex) {
+	    RestResponseDTO<Object> res = new RestResponseDTO<>();
+	    res.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+	    res.setError(null);
+	    res.setMessage("Thông tin đăng nhập sai");
+	    res.setData(null);
+	    return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(res);
+	}
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<RestResponseDTO<Object>> handleResourceNotFound(ResourceNotFoundException ex) {

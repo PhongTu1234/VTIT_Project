@@ -20,13 +20,11 @@ import com.vtit.utils.SecurityUtil;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-	private final UserService userService;
 	private final SecurityUtil securityUtil;
 	private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
-	public AuthController(UserService userService, SecurityUtil securityUtil,
+	public AuthController(SecurityUtil securityUtil,
 			AuthenticationManagerBuilder authenticationManagerBuilder) {
-		this.userService = userService;
 		this.securityUtil = securityUtil;
 		this.authenticationManagerBuilder = authenticationManagerBuilder;
 	}
@@ -35,7 +33,6 @@ public class AuthController {
 	public ResponseEntity<ResLoginDTO> AuthLogin(@RequestBody LoginDTO loginDTO) {
 		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
 				loginDTO.getUsername(), loginDTO.getPassword());
-		
 		
 		Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 		String access_token = this.securityUtil.createToken(authentication);

@@ -16,33 +16,43 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestControllerAdvice
 public class FormatRestResponse implements ResponseBodyAdvice<Object> {
 
-	@Override
-	public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
-		return true;
-	}
+    @Override
+    public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
+        return true;
+    }
 
-	@Override
-	public Object beforeBodyWrite(
-			Object body, 
-			MethodParameter returnType, 
-			MediaType selectedContentType,
-			Class<? extends HttpMessageConverter<?>> selectedConverterType, 
-			ServerHttpRequest request,
-			ServerHttpResponse response) {
-		HttpServletResponse serverResponse = ((ServletServerHttpResponse) response).getServletResponse();
-		int status = serverResponse.getStatus();
-		
+    @Override
+    public Object beforeBodyWrite(
+            Object body,
+            MethodParameter returnType,
+            MediaType selectedContentType,
+            Class<? extends HttpMessageConverter<?>> selectedConverterType,
+            ServerHttpRequest request,
+            ServerHttpResponse response) {
 
-		RestResponseDTO<Object> res = new RestResponseDTO<>();
-		res.setStatusCode(status);
-		if(status >= 400) {
-			res.setError("CALL API FALSE");
-			res.setMessage(body);
-		}else {
-			res.setData(body);
-			res.setMessage("CALL API SUCCESS");
-		}
-		return res;
-	}
+        String path = request.getURI().getPath();
 
+        // Tránh bọc lại nếu đã là RestResponseDTO
+        if (body instanceof RestResponseDTO) {
+            return body;
+        }
+
+        HttpServletResponse serverResponse = ((ServletServerHttpResponse) response).getServletResponse();
+        int status = serverResponse.getStatus();
+
+        RestResponseDTO<Object> res = new RestResponseDTO<>();
+        res.setStatusCode(status);
+
+        if (status >= 400) {
+            res.setError(body != null ? body.toString() : "Unknown error");
+            res.setMessage(null);
+            res.setData(null);
+        } else {
+            res.setError(null);
+            res.setMessage("CALL API SUCCESS");
+            res.setData(body);
+        }
+
+        return res;
+    }
 }
