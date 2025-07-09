@@ -1,6 +1,7 @@
 package com.vtit.config;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.apache.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
@@ -34,7 +35,10 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint{
 		
 		RestResponseDTO<Object> res = new RestResponseDTO<Object>();
 		res.setStatusCode(HttpStatus.SC_UNAUTHORIZED);
-		res.setError(authException.getCause().getMessage());
+		String errorMessage = Optional.ofNullable(authException.getCause())
+				.map(Throwable::getMessage)
+				.orElse(authException.getMessage());
+		res.setError(errorMessage);
 		res.setMessage("Token không hợp lệ (hết hạn, không đúng định dạng, hoặc không truyền JWT ở phần Header)...");
 		mapper.writeValue(response.getWriter(), res);
 		

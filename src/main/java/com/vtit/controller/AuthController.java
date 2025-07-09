@@ -35,6 +35,8 @@ public class AuthController {
 	public ResponseEntity<ResLoginDTO> AuthLogin(@RequestBody LoginDTO loginDTO) {
 		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
 				loginDTO.getUsername(), loginDTO.getPassword());
+		
+		
 		Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 		String access_token = this.securityUtil.createToken(authentication);
 		SecurityContextHolder.getContext().setAuthentication(authentication);
