@@ -2,6 +2,7 @@ package com.vtit.service;
 
 import java.util.Collections;
 
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,11 +22,19 @@ public class UserDetailCustom implements UserDetailsService {
 	}
 
 	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		Users user = this.userService.handleGetUserByUsername(username);
+	public UserDetails loadUserByUsername(String username) {
+	    Users user = this.userService.handleGetUserByUsername(username);
 
-		return new User(user.getUsername(), user.getPassword(),
-				Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+	    if (user == null) {
+	        // Không dùng UsernameNotFoundException nữa
+	        throw new BadCredentialsException("Thông tin đăng nhập sai");
+	    }
+
+	    return new User(
+	        user.getUsername(),
+	        user.getPassword(),
+	        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+	    );
 	}
 
 }
