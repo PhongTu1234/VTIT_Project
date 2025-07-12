@@ -7,6 +7,10 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.vtit.utils.CustomInstantDeserializer;
+import com.vtit.utils.CustomInstantSerializer;
 import com.vtit.utils.SecurityUtil;
 
 import jakarta.persistence.CascadeType;
@@ -59,8 +63,8 @@ public class Users implements Serializable {
     @Column(length = 255)
     private String address;
 
-    @Temporal(TemporalType.DATE)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")
+    @JsonSerialize(using = CustomInstantSerializer.class)
+    @JsonDeserialize(using = CustomInstantDeserializer.class)
     private Instant birthday;
 
     @Column(name = "created_date")
