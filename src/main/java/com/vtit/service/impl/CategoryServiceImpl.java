@@ -3,8 +3,12 @@ package com.vtit.service.impl;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.vtit.dto.Meta;
+import com.vtit.dto.ResultPaginationDTO;
 import com.vtit.entity.Category;
 import com.vtit.entity.Users;
 import com.vtit.exception.DuplicateResourceException;
@@ -23,8 +27,19 @@ public class CategoryServiceImpl implements CategoryService{
 	}
 
 	@Override
-	public List<Category> findAll() {
-		return categoryRepository.findAll();
+	public ResultPaginationDTO findAll(Pageable pageable) {
+		Page<Category> pageCategories = categoryRepository.findAll(pageable);
+		ResultPaginationDTO rs = new ResultPaginationDTO();
+		Meta mt = new Meta();
+		
+		mt.setPage(pageCategories.getNumber() + 1);
+		mt.setPageSize(pageCategories.getSize());
+		mt.setPages(pageCategories.getTotalPages());
+		mt.setTotals((int) pageCategories.getTotalElements());
+		
+		rs.setMeta(mt);
+		rs.setResult(pageCategories.getContent());
+		return rs;
 	}
 
 	@Override
