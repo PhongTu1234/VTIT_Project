@@ -3,9 +3,14 @@ package com.vtit.service.impl;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.vtit.dto.Meta;
+import com.vtit.dto.ResultPaginationDTO;
 import com.vtit.entity.Users;
 import com.vtit.exception.DuplicateResourceException;
 import com.vtit.exception.IdInvalidException;
@@ -25,8 +30,19 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-    public List<Users> findAll() {
-        return userRepository.findAll();
+    public ResultPaginationDTO findAll(Specification<Users> spec, Pageable pageable) {
+		Page<Users> pageUser = this.userRepository.findAll(spec, pageable);
+		ResultPaginationDTO rs = new ResultPaginationDTO();
+		Meta mt = new Meta();
+		
+		mt.setPage(pageUser.getNumber() + 1);
+		mt.setPageSize(pageUser.getSize());
+		mt.setPages(pageUser.getTotalPages());
+		mt.setTotals((int) pageUser.getTotalElements());
+		
+		rs.setMeta(mt);
+		rs.setResult(pageUser.getContent());
+        return rs;
     }
 
     @Override
