@@ -35,8 +35,8 @@ public class UserServiceImpl implements UserService{
 		ResultPaginationDTO rs = new ResultPaginationDTO();
 		Meta mt = new Meta();
 		
-		mt.setPage(pageUser.getNumber() + 1);
-		mt.setPageSize(pageUser.getSize());
+		mt.setPage(pageable.getPageNumber() + 1);
+		mt.setPageSize(pageable.getPageSize());
 		mt.setPages(pageUser.getTotalPages());
 		mt.setTotals((int) pageUser.getTotalElements());
 		

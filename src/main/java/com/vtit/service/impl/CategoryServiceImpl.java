@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.vtit.dto.Meta;
@@ -27,13 +28,13 @@ public class CategoryServiceImpl implements CategoryService{
 	}
 
 	@Override
-	public ResultPaginationDTO findAll(Pageable pageable) {
-		Page<Category> pageCategories = categoryRepository.findAll(pageable);
+	public ResultPaginationDTO findAll(Specification<Category> spec, Pageable pageable) {
+		Page<Category> pageCategories = categoryRepository.findAll(spec, pageable);
 		ResultPaginationDTO rs = new ResultPaginationDTO();
 		Meta mt = new Meta();
 		
-		mt.setPage(pageCategories.getNumber() + 1);
-		mt.setPageSize(pageCategories.getSize());
+		mt.setPage(pageable.getPageNumber() + 1);
+		mt.setPageSize(pageable.getPageSize());
 		mt.setPages(pageCategories.getTotalPages());
 		mt.setTotals((int) pageCategories.getTotalElements());
 		

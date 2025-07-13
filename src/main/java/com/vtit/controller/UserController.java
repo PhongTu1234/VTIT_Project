@@ -16,6 +16,7 @@ import com.turkraft.springfilter.boot.Filter;
 import com.vtit.dto.ResultPaginationDTO;
 import com.vtit.entity.Users;
 import com.vtit.service.UserService;
+import com.vtit.utils.annotation.ApiMessage;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ public class UserController {
     }
 
     @GetMapping
+    @ApiMessage("Fetch All Api")
     public ResponseEntity<ResultPaginationDTO> getAll(@Filter Specification<Users> spec, Pageable pageable) {
         return ResponseEntity.ok(userService.findAll(spec, pageable));
     }
