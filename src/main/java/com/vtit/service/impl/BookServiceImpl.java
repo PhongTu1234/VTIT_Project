@@ -2,6 +2,7 @@ package com.vtit.service.impl;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -75,7 +76,7 @@ public class BookServiceImpl implements BookService {
 	        String title = (String) volumeInfo.get("title");
 	        String publisher = (String) volumeInfo.get("publisher");
 	        String publishedDateStr = (String) volumeInfo.get("publishedDate");
-	        Date publishedDate = parsePublishedDate(publishedDateStr);
+	        Instant publishedDate = parsePublishedDate(publishedDateStr);
 	        String description = (String) volumeInfo.get("description");
 	        String language = (String) volumeInfo.get("language");
 	        String printType = (String) volumeInfo.get("printType");
@@ -99,7 +100,7 @@ public class BookServiceImpl implements BookService {
 	            book.setPrintType(printType);
 	            book.setDescription(description);
 	            book.setThumbnailUrl(thumbnailUrl);
-	            book.setCreatedDate(new Date());
+	            book.setCreatedDate(Instant.now());
 
 	            if (book.getBookCategories() == null) {
 	                book.setBookCategories(new ArrayList<>());
@@ -113,7 +114,7 @@ public class BookServiceImpl implements BookService {
 	                                Category newCat = new Category();
 	                                newCat.setName(categoryName);
 	                                newCat.setCode(categoryName.toLowerCase().replaceAll(" ", "_"));
-	                                newCat.setCreatedDate(new Date());
+	                                newCat.setCreatedDate(Instant.now());
 	                                return categoryRepository.save(newCat);
 	                            });
 
@@ -135,16 +136,22 @@ public class BookServiceImpl implements BookService {
 
 
 
-	private Date parsePublishedDate(String dateStr) {
+	private Instant parsePublishedDate(String dateStr) {
 	    if (dateStr == null || dateStr.isEmpty()) return null;
 	    try {
+	        SimpleDateFormat sdf;
 	        if (dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
-	            return new SimpleDateFormat("yyyy-MM-dd").parse(dateStr);
+	            sdf = new SimpleDateFormat("yyyy-MM-dd");
 	        } else if (dateStr.matches("\\d{4}-\\d{2}")) {
-	            return new SimpleDateFormat("yyyy-MM").parse(dateStr);
+	            sdf = new SimpleDateFormat("yyyy-MM");
 	        } else if (dateStr.matches("\\d{4}")) {
-	            return new SimpleDateFormat("yyyy").parse(dateStr);
+	            sdf = new SimpleDateFormat("yyyy");
+	        } else {
+	            return null; // Không khớp định dạng nào
 	        }
+	        sdf.setLenient(false); // Không cho phép ngày không hợp lệ như 2023-13-99
+	        Date parsedDate = sdf.parse(dateStr);
+	        return parsedDate.toInstant(); // Chuyển Date sang Instant
 	    } catch (ParseException e) {
 	        e.printStackTrace();
 	    }

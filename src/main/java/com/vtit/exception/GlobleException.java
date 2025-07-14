@@ -19,21 +19,22 @@ import jakarta.persistence.EntityNotFoundException;
 @RestControllerAdvice
 public class GlobleException {
 
-    @ExceptionHandler(value = {UsernameNotFoundException.class, BadCredentialsException.class})
-    public ResponseEntity<RestResponseDTO<Object>> handleIdException(Exception ex) {
-        RestResponseDTO<Object> res = new RestResponseDTO<>();
-        res.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-        res.setError(ex.getMessage());
-        res.setMessage("Exception occurs...");
-        return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(res);
-    }
+	@ExceptionHandler({UsernameNotFoundException.class, BadCredentialsException.class, IdInvalidException.class})
+	public ResponseEntity<RestResponseDTO<Object>> handleLoginFail(Exception ex) {
+	    RestResponseDTO<Object> res = new RestResponseDTO<>();
+	    res.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+	    res.setError(ex.getMessage());
+	    res.setMessage("Exception occurs...");
+	    res.setData(null);
+	    return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(res);
+	}
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<RestResponseDTO<Object>> handleResourceNotFound(ResourceNotFoundException ex) {
         RestResponseDTO<Object> res = new RestResponseDTO<>();
         res.setStatusCode(HttpStatus.SC_NOT_FOUND);
-        res.setError("ResourceNotFoundException");
-        res.setMessage(ex.getMessage());
+        res.setError(ex.getMessage() != null ? ex.getMessage() : "Resource not found");
+        res.setMessage("404 Not Found. URL not found or resource does not exist.");
         return ResponseEntity.status(HttpStatus.SC_NOT_FOUND).body(res);
     }
 
@@ -99,13 +100,34 @@ public class GlobleException {
         return ResponseEntity.status(HttpStatus.SC_BAD_REQUEST).body(response);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<RestResponseDTO<Object>> handleGenericException(Exception ex) {
-        RestResponseDTO<Object> response = new RestResponseDTO<>();
-        response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        response.setError("Internal Server Error");
-        response.setMessage(ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).body(response);
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<RestResponseDTO<Object>> handleGenericException(Exception ex) {
+//        // Nếu là lỗi xác thực, ném lại để Spring xử lý bằng entrypoint
+//        if (ex instanceof org.springframework.security.core.AuthenticationException ||
+//            ex.getCause() instanceof org.springframework.security.core.AuthenticationException) {
+//            throw (org.springframework.security.core.AuthenticationException) ex;
+//        }
+//
+//        // Nếu là lỗi decode JWT (Malformed, Expired,...), ném lại để Spring xử lý
+//        if (ex.getMessage() != null && ex.getMessage().toLowerCase().contains("jwt")) {
+//            throw new org.springframework.security.authentication.BadCredentialsException("Invalid JWT");
+//        }
+//
+//        RestResponseDTO<Object> response = new RestResponseDTO<>();
+//        response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+//        response.setError("Internal Server Error");
+//        response.setMessage("Có lỗi xảy ra trong hệ thống."); // ❗ Không nên show message gốc
+//        return ResponseEntity.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).body(response);
+//    }
+    
+    @ExceptionHandler(RefreshTokenMissingException.class)
+    public ResponseEntity<RestResponseDTO<Object>> handleRefreshException(RefreshTokenMissingException ex) {
+        RestResponseDTO<Object> res = new RestResponseDTO<>();
+        res.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+        res.setMessage(ex.getMessage());
+        res.setData(null);
+        return ResponseEntity.badRequest().body(res);
     }
+
+
 }

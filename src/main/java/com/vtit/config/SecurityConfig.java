@@ -6,7 +6,9 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -46,7 +48,8 @@ public class SecurityConfig {
 			.csrf().disable()
 			.cors(Customizer.withDefaults())
 			.authorizeHttpRequests(
-					auth -> auth.requestMatchers("/", "/api/auth/login").permitAll().anyRequest().authenticated())
+
+					auth -> auth.requestMatchers("/", "/api/v1/auth/login", "/api/v1/users", "/api/v1/auth/refresh-token").permitAll().anyRequest().authenticated())
 			.oauth2ResourceServer((oauth2) -> oauth2.
 					jwt(Customizer.withDefaults())
 					.authenticationEntryPoint(customAuthenticationEntryPoint))
@@ -63,7 +66,7 @@ public class SecurityConfig {
 	public JwtAuthenticationConverter jwtAuthenticationConverter() {
 		JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 		grantedAuthoritiesConverter.setAuthorityPrefix("");
-		grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+		grantedAuthoritiesConverter.setAuthoritiesClaimName("permission");
 		
 		JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
 		jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
@@ -92,5 +95,10 @@ public class SecurityConfig {
 	private SecretKey getSecretKet() {
 		byte[] keyBytes = Base64.from(jwtKey).decode();
 		return new SecretKeySpec(keyBytes, 0, keyBytes.length, SecurityUtil.JWT_ALGORITHM.getName());
+	}
+	
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+	    return authenticationConfiguration.getAuthenticationManager();
 	}
 }
