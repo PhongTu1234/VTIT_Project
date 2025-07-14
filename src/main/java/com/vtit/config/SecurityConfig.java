@@ -48,7 +48,8 @@ public class SecurityConfig {
 			.csrf().disable()
 			.cors(Customizer.withDefaults())
 			.authorizeHttpRequests(
-					auth -> auth.requestMatchers("/", "/api/auth/login", "/api/v1/users").permitAll().anyRequest().authenticated())
+
+					auth -> auth.requestMatchers("/", "/api/v1/auth/login", "/api/v1/users", "/api/v1/auth/refresh-token").permitAll().anyRequest().authenticated())
 			.oauth2ResourceServer((oauth2) -> oauth2.
 					jwt(Customizer.withDefaults())
 					.authenticationEntryPoint(customAuthenticationEntryPoint))
@@ -65,7 +66,7 @@ public class SecurityConfig {
 	public JwtAuthenticationConverter jwtAuthenticationConverter() {
 		JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 		grantedAuthoritiesConverter.setAuthorityPrefix("");
-		grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+		grantedAuthoritiesConverter.setAuthoritiesClaimName("permission");
 		
 		JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
 		jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);

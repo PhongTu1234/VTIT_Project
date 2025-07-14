@@ -1,5 +1,9 @@
 package com.vtit.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vtit.dto.RestResponseDTO;
+import com.vtit.utils.annotation.ApiMessage;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -9,12 +13,10 @@ import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
-import com.vtit.dto.RestResponseDTO;
-
-import jakarta.servlet.http.HttpServletResponse;
-
 @RestControllerAdvice
 public class FormatRestResponse implements ResponseBodyAdvice<Object> {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
@@ -30,9 +32,6 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
             ServerHttpRequest request,
             ServerHttpResponse response) {
 
-        String path = request.getURI().getPath();
-
-        // Tránh bọc lại nếu đã là RestResponseDTO
         if (body instanceof RestResponseDTO) {
             return body;
         }
@@ -49,8 +48,19 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
             res.setData(null);
         } else {
             res.setError(null);
-            res.setMessage("CALL API SUCCESS");
+            ApiMessage message = returnType.getMethodAnnotation(ApiMessage.class);
+            res.setMessage(message != null ? message.value() : "CALL API SUCCESS");
             res.setData(body);
+        }
+
+        // ⚠️ Nếu body gốc là String, Spring mong muốn String, nên phải tự serialize
+        if (body instanceof String) {
+            try {
+                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                return mapper.writeValueAsString(res);
+            } catch (Exception e) {
+                throw new RuntimeException("Lỗi khi convert RestResponseDTO thành JSON string", e);
+            }
         }
 
         return res;

@@ -62,6 +62,9 @@ public class Users implements Serializable {
 
     @Column(length = 255)
     private String address;
+    
+    @Column(columnDefinition = "MEDIUMTEXT")
+    private String refreshToken;
 
     @JsonSerialize(using = CustomInstantSerializer.class)
     @JsonDeserialize(using = CustomInstantDeserializer.class)

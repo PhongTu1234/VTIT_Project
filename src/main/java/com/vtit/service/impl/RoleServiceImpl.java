@@ -30,14 +30,14 @@ public class RoleServiceImpl implements RoleService {
 	public ResultPaginationDTO findAll(Specification<Roles> spec, Pageable pageable) {
 		Page<Roles> pageRoles = roleRepository.findAll(spec, pageable);
 
-		Meta meta = new Meta();
-		meta.setPage(pageRoles.getNumber() + 1);
-		meta.setPageSize(pageRoles.getSize());
-		meta.setPages(pageRoles.getTotalPages());
-		meta.setTotals((int) pageRoles.getTotalElements());
+		Meta mt = new Meta();
+		mt.setPage(pageable.getPageNumber() + 1);
+		mt.setPageSize(pageable.getPageSize());
+		mt.setPages(pageRoles.getTotalPages());
+		mt.setTotals((int) pageRoles.getTotalElements());
 
 		ResultPaginationDTO rs = new ResultPaginationDTO();
-		rs.setMeta(meta);
+		rs.setMeta(mt);
 		rs.setResult(pageRoles.getContent());
 		return rs;
 	}
