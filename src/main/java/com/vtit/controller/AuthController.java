@@ -84,17 +84,19 @@ public class AuthController {
 
 	@GetMapping("/account")
 	@ApiMessage("fresh account")
-	public ResponseEntity<ResLoginDTO.UserInfo> getAccount() {
+	public ResponseEntity<ResLoginDTO.UserGetAccount> getAccount() {
 		String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
 
 		Users currentUserDB = this.userService.handleGetUserByUsernames(email);
 		ResLoginDTO.UserInfo userInfo = new ResLoginDTO.UserInfo();
+		ResLoginDTO.UserGetAccount userGetAccount = new ResLoginDTO.UserGetAccount();
 		if (currentUserDB != null) {
 			userInfo.setId(currentUserDB.getId());
 			userInfo.setUsername(currentUserDB.getUsername());
 			userInfo.setEmail(currentUserDB.getEmail());
+			userGetAccount.setUserInfo(userInfo);
 		}
-		return ResponseEntity.ok(userInfo);
+		return ResponseEntity.ok(userGetAccount);
 	}
 
 	@GetMapping("/refresh-token")
@@ -113,5 +115,27 @@ public class AuthController {
 		} else {
 			return this.generateLoginResponse(email, email);
 		}
+	}
+	
+	@PostMapping("/logout")
+	@ApiMessage("Logout User")
+	public ResponseEntity<Void> logoutUser() throws IdInvalidException{
+		String email = SecurityUtil.getCurrentUserLogin()
+				.orElseThrow(() -> new IdInvalidException("Bạn chưa đăng nhập"));
+
+		// Xoá refresh token khỏi cơ sở dữ liệu
+		this.userService.updateUserToken(email, null);
+
+		// Tạo cookie rỗng để xoá cookie hiện tại
+		ResponseCookie cookie = ResponseCookie
+				.from("refresh_token", null)
+				.httpOnly(true)
+				.secure(true)
+				.path("/")
+				.maxAge(0)
+				.build();
+
+		return ResponseEntity.ok()
+				.header(HttpHeaders.SET_COOKIE, cookie.toString()).body(null);
 	}
 }
