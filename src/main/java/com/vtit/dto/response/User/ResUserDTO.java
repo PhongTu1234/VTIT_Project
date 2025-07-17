@@ -1,4 +1,4 @@
-package com.vtit.dto;
+package com.vtit.dto.response.User;
 
 import java.time.Instant;
 
@@ -19,6 +19,8 @@ public class ResUserDTO {
 	private String phone;
 	private String address;
 	private Instant birthday;
+	private String createdBy;
 	private Instant createAt;
+	private String updatedBy;
 	private Instant updateAt;
 }

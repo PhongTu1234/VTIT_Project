@@ -59,6 +59,9 @@ public class Book implements Serializable {
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
+    
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
 
     @Column(name = "created_date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")
@@ -73,9 +76,6 @@ public class Book implements Serializable {
 
     @Column(name = "updated_by", length = 50)
     private String updatedBy;
-    
-    @Column(name = "thumbnail_url")
-    private String thumbnailUrl;
 
     @Column(name = "is_active")
     private Boolean isActive = true;

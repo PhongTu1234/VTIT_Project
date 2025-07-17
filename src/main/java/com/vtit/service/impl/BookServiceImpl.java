@@ -7,16 +7,25 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.entity.Book;
 import com.vtit.entity.BookCategory;
 import com.vtit.entity.Category;
+import com.vtit.exception.DuplicateResourceException;
+import com.vtit.exception.IdInvalidException;
+import com.vtit.exception.ResourceNotFoundException;
 import com.vtit.reponsitory.BookRepository;
 import com.vtit.reponsitory.CategoryRepository;
 import com.vtit.service.BookService;
+import com.vtit.utils.IdValidator;
 
 @Service
 public class BookServiceImpl implements BookService {
@@ -28,26 +37,6 @@ public class BookServiceImpl implements BookService {
 		this.bookRepository = bookRepository;
 		this.restTemplate = restTemplate;
 		this.categoryRepository = categoryRepository;
-	}
-
-	@Override
-	public Book save(Book book) {
-		return bookRepository.save(book);
-	}
-
-	@Override
-	public Book findById(Integer id) {
-		return bookRepository.findById(id).orElse(null);
-	}
-
-	@Override
-	public List<Book> findAll() {
-		return bookRepository.findAll();
-	}
-
-	@Override
-	public void deleteById(Integer id) {
-		bookRepository.deleteById(id);
 	}
 
 	@Override
@@ -157,6 +146,87 @@ public class BookServiceImpl implements BookService {
 	    }
 	    return null;
 	}
+
+	@Override
+	public ResultPaginationDTO findAll(Specification<Book> spec, Pageable pageable) {
+		Page<Book> pageBooks = bookRepository.findAll(spec, pageable);
+		ResultPaginationDTO rs = new ResultPaginationDTO();
+		ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
+		
+		mt.setPage(pageable.getPageNumber() + 1);
+		mt.setPageSize(pageable.getPageSize());
+		mt.setPages(pageBooks.getTotalPages());
+		mt.setTotals((int) pageBooks.getTotalElements());
+		
+		rs.setMeta(mt);
+		rs.setResult(pageBooks.getContent());
+		return rs;
+	}
+
+	@Override
+	public Optional<Book> findById(String id) {
+		Integer idInt = IdValidator.validateAndParse(id);
+		return bookRepository.findById(idInt);
+	}
+
+	@Override
+    public Book create(Book book) {
+//    	if (categoryRepository.existsByName(book.get)) {
+//            throw new DuplicateResourceException("Name '" + category.getName() + "' already exists");
+//        }
+//    	category.setCode((category.getName()).toLowerCase().replaceAll(" ", "_"));
+        return bookRepository.save(book);
+    }
+
+    @Override
+    public Book update(Book updateBook) {
+
+        // Tìm category theo ID
+    	Book existingBook = bookRepository.findById(updateBook.getId())
+            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy danh mục với id = " + updateBook.getId()));
+
+        // Kiểm tra trùng name
+//        if (updatedCategory.getName() != null &&
+//        		categoryRepository.existsByNameAndIdNot(updatedCategory.getName(), updatedCategory.getId())) {
+//            throw new DuplicateResourceException("Name '" + updatedCategory.getName() + "' đã tồn tại");
+//        }
+//        existingCategory.setCode((updatedCategory.getName()).toLowerCase().replaceAll(" ", "_"));
+
+        // Cập nhật thông tin (nếu có truyền lên)
+        if (updateBook.getTitle() != null) existingBook.setTitle(updateBook.getTitle());
+        if (updateBook.getAuthor() != null) existingBook.setAuthor(updateBook.getAuthor());
+        if (updateBook.getPublisher() != null) existingBook.setPublisher(updateBook.getPublisher());
+        if (updateBook.getPublishedDate() != null) existingBook.setPublishedDate(updateBook.getPublishedDate());
+        if (updateBook.getPageCount() != null) existingBook.setPageCount(updateBook.getPageCount());
+        if (updateBook.getQuantity() != null) existingBook.setQuantity(updateBook.getQuantity());
+        if (updateBook.getLanguage() != null) existingBook.setLanguage(updateBook.getLanguage());
+        if (updateBook.getPrintType() != null) existingBook.setPrintType(updateBook.getPrintType());
+        if (updateBook.getDescription() != null) existingBook.setDescription(updateBook.getDescription());
+        if (updateBook.getThumbnailUrl() != null) existingBook.setThumbnailUrl(updateBook.getThumbnailUrl());
+		if (updateBook.getBookCategories() != null) {
+			existingBook.setBookCategories(new ArrayList<>());
+			for (BookCategory bookCategory : updateBook.getBookCategories()) {
+				BookCategory newBookCategory = new BookCategory();
+				newBookCategory.setBook(existingBook);
+				newBookCategory.setCategory(bookCategory.getCategory());
+				existingBook.getBookCategories().add(newBookCategory);
+			}
+		}
+		
+        
+        
+
+        return bookRepository.save(updateBook);
+    }
+
+    
+    @Override
+    public void delete(String id) {
+        Integer intId = IdValidator.validateAndParse(id);
+        Book book = bookRepository.findById(intId)
+            .orElseThrow(() -> new IdInvalidException("Không tìm thấy danh mục với id = " + intId));
+        bookRepository.delete(book);
+    }
 
 
 

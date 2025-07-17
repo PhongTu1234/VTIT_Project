@@ -1,6 +1,6 @@
-package com.vtit.dto;
+package com.vtit.dto.request.auth;
 
-public class LoginDTO {
+public class ReqLoginDTO {
 	private String username;
 	private String password;
 	public String getUsername() {

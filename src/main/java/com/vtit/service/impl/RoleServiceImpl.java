@@ -7,8 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.vtit.dto.Meta;
-import com.vtit.dto.ResultPaginationDTO;
+import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.entity.Roles;
 import com.vtit.exception.DuplicateResourceException;
 import com.vtit.exception.IdInvalidException;
@@ -30,7 +29,7 @@ public class RoleServiceImpl implements RoleService {
 	public ResultPaginationDTO findAll(Specification<Roles> spec, Pageable pageable) {
 		Page<Roles> pageRoles = roleRepository.findAll(spec, pageable);
 
-		Meta mt = new Meta();
+		ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
 		mt.setPage(pageable.getPageNumber() + 1);
 		mt.setPageSize(pageable.getPageSize());
 		mt.setPages(pageRoles.getTotalPages());

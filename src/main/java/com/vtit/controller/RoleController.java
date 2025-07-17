@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.turkraft.springfilter.boot.Filter;
-import com.vtit.dto.ResultPaginationDTO;
+import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.entity.Roles;
 import com.vtit.service.RoleService;
 import jakarta.persistence.EntityNotFoundException;

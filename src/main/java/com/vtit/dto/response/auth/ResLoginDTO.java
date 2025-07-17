@@ -1,4 +1,4 @@
-package com.vtit.dto;
+package com.vtit.dto.response.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
