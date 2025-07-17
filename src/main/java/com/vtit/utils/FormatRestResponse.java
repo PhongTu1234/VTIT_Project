@@ -1,7 +1,7 @@
 package com.vtit.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vtit.dto.RestResponseDTO;
+import com.vtit.dto.common.RestResponseDTO;
 import com.vtit.utils.annotation.ApiMessage;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.MethodParameter;

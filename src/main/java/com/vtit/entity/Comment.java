@@ -2,7 +2,6 @@ package com.vtit.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.vtit.utils.SecurityUtil;

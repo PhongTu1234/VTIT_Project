@@ -1,4 +1,4 @@
-package com.vtit.dto;
+package com.vtit.dto.response.User;
 
 import java.time.Instant;
 
@@ -7,14 +7,14 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ResUpdateUserDTO {
+public class ResCreateUserDTO {
 	private long id;
 	private String username;
+	private String email;
 	private String fullname;
 	private String phone;
-	private String email;
 	private String address;
 	private Instant birthday;
-	private Instant updatedAt;
+	private String createAt;
 	
 }

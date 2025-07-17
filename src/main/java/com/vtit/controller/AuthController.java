@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.vtit.dto.LoginDTO;
-import com.vtit.dto.ResLoginDTO;
+import com.vtit.dto.request.auth.ReqLoginDTO;
+import com.vtit.dto.response.auth.ResLoginDTO;
 import com.vtit.entity.Users;
 import com.vtit.exception.IdInvalidException;
 import com.vtit.service.UserService;
@@ -70,7 +70,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<ResLoginDTO> AuthLogin(@RequestBody LoginDTO loginDTO) {
+	public ResponseEntity<ResLoginDTO> AuthLogin(@RequestBody ReqLoginDTO loginDTO) {
 		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
 				loginDTO.getUsername(), loginDTO.getPassword());
 

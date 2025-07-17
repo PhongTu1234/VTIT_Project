@@ -1,4 +1,4 @@
-package com.vtit.service;
+package com.vtit.config;
 
 import java.util.Collections;
 
@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 import com.vtit.entity.Users;
+import com.vtit.service.UserService;
 
 @Component("userDetailsService")
 public class UserDetailCustom implements UserDetailsService {

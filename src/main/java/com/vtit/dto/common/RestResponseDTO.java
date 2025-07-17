@@ -1,4 +1,4 @@
-package com.vtit.dto;
+package com.vtit.dto.common;
 
 import lombok.Data;
 
