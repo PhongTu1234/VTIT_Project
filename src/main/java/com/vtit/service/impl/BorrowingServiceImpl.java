@@ -9,7 +9,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import com.vtit.dto.common.ResultPaginationDTO;
-import com.vtit.dto.response.borrowing.BorrowingDTO;
+import com.vtit.dto.request.borrowing.ReqCreateBorrowingDTO;
+import com.vtit.dto.request.borrowing.ReqUpdateBorrowingDTO;
+import com.vtit.dto.response.borrowing.ResBorrowingDTO;
+import com.vtit.dto.response.borrowing.ResCreateBorrowingDTO;
+import com.vtit.dto.response.borrowing.ResUpdateBorrowingDTO;
 import com.vtit.entity.Book;
 import com.vtit.entity.Borrowing;
 import com.vtit.entity.Users;
@@ -35,8 +39,8 @@ public class BorrowingServiceImpl implements BorrowingService {
 		this.bookRepo = bookRepo;
 	}
 
-    private BorrowingDTO mapToDTO(Borrowing b) {
-        BorrowingDTO dto = new BorrowingDTO();
+    private ResBorrowingDTO mapToDTO(Borrowing b) {
+    	ResBorrowingDTO dto = new ResBorrowingDTO();
         dto.setId(b.getId());
         dto.setUserId(b.getUser().getId());
         dto.setBookId(b.getBook().getId());
@@ -62,14 +66,14 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    public BorrowingDTO findById(Integer id) {
+    public ResBorrowingDTO findById(Integer id) {
         Borrowing borrowing = borrowingRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Borrowing not found with id: " + id));
         return mapToDTO(borrowing);
     }
 
     @Override
-    public BorrowingDTO create(BorrowingDTO dto) {
+    public ResCreateBorrowingDTO create(ReqCreateBorrowingDTO dto) {
         Users user = userRepo.findById(dto.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Book book = bookRepo.findById(dto.getBookId())
@@ -85,8 +89,8 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    public BorrowingDTO update(Integer id, BorrowingDTO dto) {
-        Borrowing b = borrowingRepo.findById(id)
+    public ResUpdateBorrowingDTO update(ReqUpdateBorrowingDTO dto) {
+        Borrowing b = borrowingRepo.findById(dto.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Borrowing not found"));
 
         if (dto.getUserId() != null) {

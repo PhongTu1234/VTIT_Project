@@ -6,7 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.vtit.dto.common.ResultPaginationDTO;
-import com.vtit.dto.response.borrowing.BorrowingDTO;
+import com.vtit.dto.request.borrowing.ReqCreateBorrowingDTO;
+import com.vtit.dto.request.borrowing.ReqUpdateBorrowingDTO;
+import com.vtit.dto.response.borrowing.ResBorrowingDTO;
+import com.vtit.dto.response.borrowing.ResCreateBorrowingDTO;
+import com.vtit.dto.response.borrowing.ResUpdateBorrowingDTO;
 import com.vtit.entity.Borrowing;
 import com.vtit.service.BorrowingService;
 
@@ -26,18 +30,18 @@ public class BorrowingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BorrowingDTO> getById(@PathVariable Integer id) {
+    public ResponseEntity<ResBorrowingDTO> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(borrowingService.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity<BorrowingDTO> create(@RequestBody BorrowingDTO dto) {
+    public ResponseEntity<ResCreateBorrowingDTO> create(@RequestBody ReqCreateBorrowingDTO dto) {
         return ResponseEntity.ok(borrowingService.create(dto));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<BorrowingDTO> update(@PathVariable Integer id, @RequestBody BorrowingDTO dto) {
-        return ResponseEntity.ok(borrowingService.update(id, dto));
+    @PutMapping
+    public ResponseEntity<ResUpdateBorrowingDTO> update(@RequestBody ReqUpdateBorrowingDTO dto) {
+        return ResponseEntity.ok(borrowingService.update(dto));
     }
 
     @DeleteMapping("/{id}")

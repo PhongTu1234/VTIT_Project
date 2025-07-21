@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.turkraft.springfilter.boot.Filter;
 import com.vtit.dto.common.ResultPaginationDTO;
-import com.vtit.dto.response.post.PostDTO;
 import com.vtit.dto.response.postReaction.ReactionSummaryDTO;
 import com.vtit.entity.Post;
 import com.vtit.entity.Users;

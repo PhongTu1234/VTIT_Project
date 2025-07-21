@@ -1,12 +1,9 @@
 package com.vtit.service;
 
-import java.util.Optional;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.vtit.dto.common.ResultPaginationDTO;
-import com.vtit.dto.response.post.PostDTO;
 import com.vtit.entity.Post;
 
 public interface PostService {

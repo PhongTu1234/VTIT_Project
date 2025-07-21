@@ -82,7 +82,8 @@ public class UserServiceImpl implements UserService {
 		}
 
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
-		return convertToResCreateUserDTO(userRepository.save(convertToEntity(user)));
+		Users userDB = userRepository.save(convertToEntity(user));
+		return convertToResCreateUserDTO(userDB);
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package com.vtit.dto.book;
+package com.vtit.dto.request.book;
 
 import java.time.Instant;
 import java.util.List;

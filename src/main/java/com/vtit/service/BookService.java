@@ -3,8 +3,8 @@ package com.vtit.service;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import com.vtit.dto.book.ReqCreateBookDTO;
-import com.vtit.dto.book.ReqUpdateBookDTO;
+import com.vtit.dto.request.book.ReqCreateBookDTO;
+import com.vtit.dto.request.book.ReqUpdateBookDTO;
 import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.dto.response.book.ResBookDTO;
 import com.vtit.dto.response.book.ResCreateBookDTO;

@@ -13,9 +13,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.vtit.dto.book.ReqCreateBookDTO;
-import com.vtit.dto.book.ReqUpdateBookDTO;
+import com.vtit.dto.request.book.ReqCreateBookDTO;
+import com.vtit.dto.request.book.ReqUpdateBookDTO;
 import com.vtit.dto.common.ResultPaginationDTO;
+import com.vtit.dto.response.User.ResUserDTO;
 import com.vtit.dto.response.book.ResBookDTO;
 import com.vtit.dto.response.book.ResCreateBookDTO;
 import com.vtit.dto.response.book.ResUpdateBookDTO;
@@ -164,6 +165,11 @@ public class BookServiceImpl implements BookService {
 	@Override
 	public ResultPaginationDTO findAll(Specification<Book> spec, Pageable pageable) {
 		Page<Book> pageBooks = bookRepository.findAll(spec, pageable);
+		
+		List<ResBookDTO> bookDTOs = pageBooks.getContent().stream()
+				.map(this::convertToResBookDTO)
+				.collect(Collectors.toList());
+		
 		ResultPaginationDTO rs = new ResultPaginationDTO();
 		ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
 
@@ -173,7 +179,7 @@ public class BookServiceImpl implements BookService {
 		mt.setTotals((int) pageBooks.getTotalElements());
 
 		rs.setMeta(mt);
-		rs.setResult(pageBooks.getContent());
+		rs.setResult(bookDTOs);
 		return rs;
 	}
 
@@ -247,7 +253,7 @@ public class BookServiceImpl implements BookService {
 		bookRepository.delete(book);
 	}
 
-	public static ResBookDTO convertToResBookDTO(Book book) {
+	public ResBookDTO convertToResBookDTO(Book book) {
 		if (book == null)
 			return null;
 
@@ -282,7 +288,6 @@ public class BookServiceImpl implements BookService {
 				return catDTO;
 			}).collect(Collectors.toList());
 		}
-
 		dto.setCategories(categoryDTOs);
 		return dto;
 	}
