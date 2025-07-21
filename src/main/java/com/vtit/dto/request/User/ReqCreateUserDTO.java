@@ -8,6 +8,8 @@ import lombok.Setter;
 
 import java.time.Instant;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 @Getter
 @Setter
 public class ReqCreateUserDTO {
@@ -29,6 +31,7 @@ public class ReqCreateUserDTO {
 
     private String address;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     private Instant birthday;
 
 

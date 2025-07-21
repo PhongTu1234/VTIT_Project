@@ -15,6 +15,7 @@ public class ResCreateUserDTO {
 	private String phone;
 	private String address;
 	private Instant birthday;
-	private String createAt;
+	private Instant createAt;
+	private String createBy;
 	
 }

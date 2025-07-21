@@ -16,5 +16,6 @@ public class ResUpdateUserDTO {
 	private String address;
 	private Instant birthday;
 	private Instant updatedAt;
+	private String updateBy;
 	
 }

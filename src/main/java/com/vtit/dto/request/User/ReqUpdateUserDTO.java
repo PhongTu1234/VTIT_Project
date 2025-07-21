@@ -16,9 +16,5 @@ public class ReqUpdateUserDTO {
     private String phone;
     private String address;
     private Instant birthday;
-    private Instant createdAt;
-    private String createdBy;
-    private Instant updatedAt;
-    private String updatedBy;
     
 }

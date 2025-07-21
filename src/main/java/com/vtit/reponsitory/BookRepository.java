@@ -1,5 +1,7 @@
 package com.vtit.reponsitory;
 
+import java.time.Instant;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -7,6 +9,9 @@ import com.vtit.entity.Book;
 
 public interface BookRepository extends JpaRepository<Book, Integer>, JpaSpecificationExecutor<Book>{
 	boolean existsByTitleAndAuthor(String title, String author);
+	boolean existsByTitleAndAuthorAndPublisherAndPublishedDate(
+	        String title, String author, String publisher, Instant publishedDate
+	    );
 //	Optional<Book> findByName(String name);
 //	boolean existsByName(String name);
 //	boolean existsByCode(String code);

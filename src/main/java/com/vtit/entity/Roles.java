@@ -14,6 +14,7 @@ import com.vtit.utils.SecurityUtil;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -76,12 +77,12 @@ public class Roles implements Serializable {
         this.updatedDate = Instant.now();
     }
     
-    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true) // xóa trong List Java = xóa trong DB
+    @OneToMany(mappedBy = "user_Role", fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<UserRole> userRoles;
+    private List<Users> user;
     
-    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true) // xóa trong List Java = xóa trong DB
+    @OneToMany(mappedBy = "role_Permission", fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<RolePermission> rolePermissions;
+    private List<Permission> permission;
 }
 

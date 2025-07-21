@@ -1,5 +1,6 @@
 package com.vtit.service.impl;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,15 +23,18 @@ import com.vtit.exception.ResourceNotFoundException;
 import com.vtit.reponsitory.UserRepository;
 import com.vtit.service.UserService;
 import com.vtit.utils.IdValidator;
+import com.vtit.utils.SecurityUtil;
 
 @Service
 public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final SecurityUtil securityUtil;
 
-	public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+	public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, SecurityUtil securityUtil) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
+		this.securityUtil = securityUtil;
 	}
 
 	@Override
@@ -112,7 +116,6 @@ public class UserServiceImpl implements UserService {
 		if (updatedUser.getPhone() != null) existingUser.setPhone(updatedUser.getPhone());
 		if (updatedUser.getAddress() != null) existingUser.setAddress(updatedUser.getAddress());
 		if (updatedUser.getBirthday() != null) existingUser.setBirthday(updatedUser.getBirthday());
-		if (updatedUser.getUpdatedBy() != null) existingUser.setUpdatedBy(updatedUser.getUpdatedBy());
 
 		userRepository.save(existingUser);
 		return convertToResUpdateUserDTO(existingUser);
@@ -159,7 +162,8 @@ public class UserServiceImpl implements UserService {
 		dto.setPhone(user.getPhone());
 		dto.setAddress(user.getAddress());
 		dto.setBirthday(user.getBirthday());
-		dto.setCreateAt(user.getCreatedDate().toString());
+		dto.setCreateAt(user.getCreatedDate());
+		dto.setCreateBy(user.getCreatedBy());
 		return dto;
 	}
 
@@ -189,6 +193,7 @@ public class UserServiceImpl implements UserService {
 		dto.setAddress(user.getAddress());
 		dto.setBirthday(user.getBirthday());
 		dto.setUpdatedAt(user.getUpdatedDate());
+		dto.setUpdateBy(user.getUpdatedBy());
 		return dto;
 	}
 	
@@ -201,6 +206,7 @@ public class UserServiceImpl implements UserService {
 	    user.setPhone(dto.getPhone());
 	    user.setAddress(dto.getAddress());
 	    user.setBirthday(dto.getBirthday());
+	    user.setRefreshToken(null);
 	    return user;
 	}
 
@@ -216,9 +222,5 @@ public class UserServiceImpl implements UserService {
 	    user.setBirthday(dto.getBirthday());
 	    return user;
 	}
-	
-	
-
-
 
 }

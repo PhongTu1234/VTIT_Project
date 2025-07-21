@@ -7,14 +7,19 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.vtit.utils.SecurityUtil;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -99,7 +104,8 @@ public class Book implements Serializable {
         this.updatedDate = Instant.now();
     }
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true) //xóa trong List Java = xóa trong DB
-    @JsonIgnore
-    private List<BookCategory> bookCategories;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("book")
+    @JoinTable(name = "Book_Category", joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private List<Category> category;
 }
