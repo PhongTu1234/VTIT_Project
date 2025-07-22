@@ -2,6 +2,8 @@ package com.vtit.dto.response.comment;
 
 import java.time.Instant;
 
+import com.vtit.dto.response.post.ResPostSummaryDTO;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,8 +12,8 @@ import lombok.Setter;
 public class ResUpdateCommentDTO {
 	private Integer id;
     private String content;
-    private Integer postId;
-    private Integer userId;
     private String updatedBy;
     private Instant updatedDate;
+    
+    private ResPostSummaryDTO Post;
 }
