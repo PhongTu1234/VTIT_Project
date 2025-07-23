@@ -1,8 +1,8 @@
 package com.vtit.entity;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.vtit.utils.SecurityUtil;
@@ -19,6 +19,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.persistence.Transient;
 import lombok.Data;
 
 @SuppressWarnings("serial")
@@ -38,12 +39,15 @@ public class Borrowing implements Serializable {
     @ManyToOne
     @JoinColumn(name = "book_id")
     private Book book;
+    
+    @Column(name = "borrow_duration")
+    private Integer borrowDuration;
 
     @Column(name = "borrow_date", nullable = false)
-    private Date borrowDate;
+    private Instant borrowDate;
 
     @Column(name = "return_date")
-    private Date returnDate;
+    private Instant returnDate;
 
     @Column(name = "created_date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")
@@ -80,4 +84,21 @@ public class Borrowing implements Serializable {
     			SecurityUtil.getCurrentUserLogin().get() : "";
         this.updatedDate = Instant.now();
     }
+    
+    @Transient
+    public String getStatus() {
+        Instant now = Instant.now();
+        if (returnDate != null) {
+            return "Đã hoàn thành";
+        }
+        if (borrowDate != null && borrowDuration != null) {
+            Instant dueDate = borrowDate.plus(Duration.ofDays(borrowDuration));
+            if (dueDate.isBefore(now)) {
+                return "Quá hạn";
+            }
+            return "Đang mượn";
+        }
+        return "Không xác định";
+    }
+
 }

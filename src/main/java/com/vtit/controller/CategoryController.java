@@ -1,13 +1,8 @@
 package com.vtit.controller;
 
-import java.util.List;
-import java.util.Optional;
-
 import org.apache.http.HttpStatus;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,12 +11,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.vtit.dto.ResultPaginationDTO;
+import com.turkraft.springfilter.boot.Filter;
+import com.vtit.dto.common.ResultPaginationDTO;
+import com.vtit.dto.request.category.ReqCreateCategoryDTO;
+import com.vtit.dto.request.category.ReqUpdateCategoryDTO;
+import com.vtit.dto.response.category.ResCategoryDTO;
+import com.vtit.dto.response.category.ResCreateCategoryDTO;
+import com.vtit.dto.response.category.ResUpdateCategoryDTO;
 import com.vtit.entity.Category;
-import com.vtit.entity.Users;
 import com.vtit.service.CategoryService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -38,25 +37,23 @@ public class CategoryController {
 	}
 	
 	@GetMapping
-	public ResponseEntity<ResultPaginationDTO> getAll(Specification<Category> spec, Pageable pageable){
+	public ResponseEntity<ResultPaginationDTO> getAll(@Filter Specification<Category> spec, Pageable pageable){
 		return ResponseEntity.ok(categoryService.findAll(spec, pageable));
 	}
 	
 	@GetMapping("/{id}")
-    public ResponseEntity<Category> getById(@PathVariable String id) {
-        return categoryService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found with id " + id));
+    public ResponseEntity<ResCategoryDTO> getById(@PathVariable String id) {
+        return ResponseEntity.ok(categoryService.findById(id));
     }
 	
 	@PostMapping
-    public ResponseEntity<Category> create(@Valid @RequestBody Category category) {
-        return ResponseEntity.status(HttpStatus.SC_CREATED).body(categoryService.create(category));
+    public ResponseEntity<ResCreateCategoryDTO> create(@Valid @RequestBody ReqCreateCategoryDTO dto) {
+        return ResponseEntity.status(HttpStatus.SC_CREATED).body(categoryService.create(dto));
     }
 	
 	@PutMapping()
-    public ResponseEntity<Category> update(@Valid @RequestBody Category category) {
-        return ResponseEntity.ok(categoryService.update(category));
+    public ResponseEntity<ResUpdateCategoryDTO> update(@Valid @RequestBody ReqUpdateCategoryDTO dto) {
+        return ResponseEntity.ok(categoryService.update(dto));
     }
     
     @DeleteMapping("/{id}")

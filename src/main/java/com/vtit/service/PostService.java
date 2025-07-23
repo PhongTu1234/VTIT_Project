@@ -1,5 +1,15 @@
 package com.vtit.service;
 
-public interface PostService {
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
+import com.vtit.dto.common.ResultPaginationDTO;
+import com.vtit.entity.Post;
+
+public interface PostService {
+	ResultPaginationDTO findAll(Specification<Post> spec, Pageable pageable);
+    Post findById(String id);
+    Post create(Post post);
+    Post update(Post post);
+    void delete(String id);
 }

@@ -38,7 +38,7 @@ CREATE TABLE Roles (
 
 -- USER_ROLE
 CREATE TABLE User_Role (
-	id INT IDENTITY(1,1) PRIMARY KEY,
+	--id INT IDENTITY(1,1) PRIMARY KEY,
     user_id INT FOREIGN KEY REFERENCES Users(id),
     role_id INT FOREIGN KEY REFERENCES Roles(id)
 );
@@ -58,7 +58,7 @@ CREATE TABLE Permissions (
 
 -- ROLE_PERMISSION
 CREATE TABLE Role_Permission (
-	id INT IDENTITY(1,1) PRIMARY KEY,
+	--id INT IDENTITY(1,1) PRIMARY KEY,
     role_id INT FOREIGN KEY REFERENCES Roles(id),
     permission_id INT FOREIGN KEY REFERENCES Permissions(id)
 );
@@ -99,7 +99,7 @@ CREATE TABLE Books (
 
 -- BOOK_CATEGORY
 CREATE TABLE Book_Category (
-	id INT IDENTITY(1,1) PRIMARY KEY,
+	--id INT IDENTITY(1,1) PRIMARY KEY,
     book_id INT FOREIGN KEY REFERENCES Books(id),
     category_id INT FOREIGN KEY REFERENCES Categories(id)
 );
@@ -145,4 +145,16 @@ CREATE TABLE Comments (
     updated_by NVARCHAR(50),
     is_active BIT DEFAULT 1,
     is_deleted BIT DEFAULT 0
+);
+
+CREATE TABLE post_reaction (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    reaction_type VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT uq_post_user UNIQUE (post_id, user_id),
+    CONSTRAINT fk_post_reaction_post FOREIGN KEY (post_id) REFERENCES Posts(id),
+    CONSTRAINT fk_post_reaction_user FOREIGN KEY (user_id) REFERENCES Users(id)
 );

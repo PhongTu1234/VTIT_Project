@@ -1,16 +1,22 @@
 package com.vtit.service;
 
-import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
+import com.vtit.dto.request.book.ReqCreateBookDTO;
+import com.vtit.dto.request.book.ReqUpdateBookDTO;
+import com.vtit.dto.common.ResultPaginationDTO;
+import com.vtit.dto.response.book.ResBookDTO;
+import com.vtit.dto.response.book.ResCreateBookDTO;
+import com.vtit.dto.response.book.ResUpdateBookDTO;
 import com.vtit.entity.Book;
 
 public interface BookService {
-	Book save(Book book);
-    Book findById(Integer id);
-    List<Book> findAll();
-    void deleteById(Integer id);
-    
     void syncBooksFromGoogleApi();
-    
     boolean existsByTitleAndAuthor(String title, String author);
+    ResultPaginationDTO findAll(Specification<Book> spec, Pageable pageable);
+    ResBookDTO findById(String id);
+	ResCreateBookDTO create(ReqCreateBookDTO dto);
+	ResUpdateBookDTO update(ReqUpdateBookDTO dto);
+    void delete(String id);
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.vtit.dto.RestResponseDTO;
+import com.vtit.dto.common.RestResponseDTO;
 
 import jakarta.persistence.EntityNotFoundException;
 

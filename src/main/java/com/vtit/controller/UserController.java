@@ -1,7 +1,5 @@
 package com.vtit.controller;
 
-import java.util.Optional;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -15,15 +13,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.turkraft.springfilter.boot.Filter;
-import com.vtit.dto.ResCreateUserDTO;
-import com.vtit.dto.ResUpdateUserDTO;
-import com.vtit.dto.ResUserDTO;
-import com.vtit.dto.ResultPaginationDTO;
+import com.vtit.dto.common.ResultPaginationDTO;
+import com.vtit.dto.request.User.ReqCreateUserDTO;
+import com.vtit.dto.request.User.ReqUpdateUserDTO;
+import com.vtit.dto.response.User.ResCreateUserDTO;
+import com.vtit.dto.response.User.ResUpdateUserDTO;
+import com.vtit.dto.response.User.ResUserDTO;
 import com.vtit.entity.Users;
 import com.vtit.service.UserService;
 import com.vtit.utils.annotation.ApiMessage;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 
 @RestController
@@ -37,33 +36,34 @@ public class UserController {
     }
 
     @GetMapping
-    @ApiMessage("Fetch All Api")
+    @ApiMessage("Fetch All Users")
     public ResponseEntity<ResultPaginationDTO> getAll(@Filter Specification<Users> spec, Pageable pageable) {
         return ResponseEntity.ok(userService.findAll(spec, pageable));
     }
 
     @GetMapping("/{id}")
-    @ApiMessage("fetch User by ID")
+    @ApiMessage("Fetch User by ID")
     public ResponseEntity<ResUserDTO> getById(@PathVariable String id) {
         return ResponseEntity.ok(userService.findById(id));
     }
 
     @PostMapping
-    @ApiMessage("Create new a User")
-    public ResponseEntity<ResCreateUserDTO> create(@Valid @RequestBody Users user) {
-        return ResponseEntity.ok(userService.convertToResCreateUserDTO(user));
+    @ApiMessage("Create a New User")
+    public ResponseEntity<ResCreateUserDTO> create(@Valid @RequestBody ReqCreateUserDTO dto) {
+        return ResponseEntity.ok(userService.create(dto));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping
     @ApiMessage("Update a User")
-    public ResponseEntity<ResUpdateUserDTO> update(@PathVariable String id, @Valid @RequestBody Users user) {
-        return ResponseEntity.ok(userService.update(id, user));
+    public ResponseEntity<ResUpdateUserDTO> update(@Valid @RequestBody ReqUpdateUserDTO dto) {
+        return ResponseEntity.ok(userService.update(dto));
     }
-    
+
     @DeleteMapping("/{id}")
     @ApiMessage("Delete a User")
-    public void delete(@PathVariable String id) {
+    public ResponseEntity<Void> delete(@PathVariable String id) {
         userService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
 }
