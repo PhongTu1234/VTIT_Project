@@ -1,21 +1,15 @@
 package com.vtit.service.impl;
 
-import java.time.Instant;
-
 import org.springframework.stereotype.Service;
 
 import com.vtit.dto.request.comment.RepCreateCommentDTO;
 import com.vtit.dto.request.comment.ReqUpdateCommentDTO;
-import com.vtit.dto.response.User.ResUserSummartDTO;
 import com.vtit.dto.response.comment.ResCommentDTO;
 import com.vtit.dto.response.comment.ResCreateCommentDTO;
 import com.vtit.dto.response.comment.ResUpdateCommentDTO;
-import com.vtit.dto.response.post.PostSummaryDTO;
-import com.vtit.dto.response.post.ResPostDTO;
 import com.vtit.dto.response.post.ResPostSummaryDTO;
 import com.vtit.entity.Comment;
 import com.vtit.entity.Post;
-import com.vtit.entity.Users;
 import com.vtit.exception.IdInvalidException;
 import com.vtit.reponsitory.CommentRepository;
 import com.vtit.reponsitory.PostRepository;
@@ -67,7 +61,7 @@ public class CommentServiceImpl implements CommentService {
 		ResPostSummaryDTO postSummaryDTO = new ResPostSummaryDTO();
 		postSummaryDTO.setId(postDB.getId());
 		postSummaryDTO.setContent(postDB.getContent());
-		postSummaryDTO.setFullname(postDB.getUser().getFullname());
+		postSummaryDTO.setAuthorName(postDB.getUser().getFullname());
 		dto.setPost(postSummaryDTO);
 		
 //		Users userDB = userRepository.findByEmail(securityUtil.getCurrentUserLogin().get());
@@ -84,8 +78,15 @@ public class CommentServiceImpl implements CommentService {
 		ResUpdateCommentDTO dto = new ResUpdateCommentDTO();
 		dto.setId(comment.getId());
 		dto.setContent(comment.getContent());
-		dto.setPostId(comment.getPostId());
-		dto.setUserId(comment.getUserId());
+		
+		Post postDB = postRepository.findById(comment.getPost().getId())
+				.orElseThrow(() -> new IdInvalidException("Không tìm thấy Post với id = " + comment.getPost().getId()));
+		ResPostSummaryDTO postSummaryDTO = new ResPostSummaryDTO();
+		postSummaryDTO.setId(postDB.getId());
+		postSummaryDTO.setContent(postDB.getContent());
+		postSummaryDTO.setAuthorName(postDB.getUser().getFullname());
+		dto.setPost(postSummaryDTO);
+		
 		dto.setUpdatedBy(comment.getUpdatedBy());
 		dto.setUpdatedDate(comment.getUpdatedDate());
 		return dto;
@@ -95,8 +96,15 @@ public class CommentServiceImpl implements CommentService {
 		ResCommentDTO dto = new ResCommentDTO();
 		dto.setId(comment.getId());
 		dto.setContent(comment.getContent());
-		dto.setPostId(comment.getPostId());
-		dto.setUserId(comment.getUserId());
+		
+		Post postDB = postRepository.findById(comment.getPost().getId())
+				.orElseThrow(() -> new IdInvalidException("Không tìm thấy Post với id = " + comment.getPost().getId()));
+		ResPostSummaryDTO postSummaryDTO = new ResPostSummaryDTO();
+		postSummaryDTO.setId(postDB.getId());
+		postSummaryDTO.setContent(postDB.getContent());
+		postSummaryDTO.setAuthorName(postDB.getUser().getFullname());
+		dto.setPost(postSummaryDTO);
+		
 		dto.setCreatedBy(comment.getCreatedBy());
 		dto.setCreatedDate(comment.getCreatedDate());
 		dto.setUpdatedBy(comment.getUpdatedBy());

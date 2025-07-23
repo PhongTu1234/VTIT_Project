@@ -1,6 +1,8 @@
 package com.vtit.dto.request.borrowing;
 
-import java.util.Date;
+import java.time.Instant;
+
+import com.vtit.dto.response.book.ResBookIdDTO;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -8,8 +10,8 @@ import lombok.Setter;
 @Setter
 public class ReqUpdateBorrowingDTO {
 	private Integer id;
-	private Integer userId;
-    private Integer bookId;
-    private Date borrowDate;
-    private Date returnDate;
+    private ResBookIdDTO book;
+    private Integer borrowDuration;
+    private Instant borrowDate;
+    private Instant returnDate;
 }

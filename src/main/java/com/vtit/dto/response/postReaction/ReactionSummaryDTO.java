@@ -10,6 +10,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReactionSummaryDTO {
+	private Integer postId;
+	private String postTitle;
+	private String postContent;
+	private String authorName;
     private long likeCount;
     private long dislikeCount;
 }

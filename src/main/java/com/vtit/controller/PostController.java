@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.turkraft.springfilter.boot.Filter;
 import com.vtit.dto.common.ResultPaginationDTO;
+import com.vtit.dto.response.post.ResPostReactionDTO;
+import com.vtit.dto.response.post.ResPostSummaryDTO;
 import com.vtit.dto.response.postReaction.ReactionSummaryDTO;
 import com.vtit.entity.Post;
 import com.vtit.entity.Users;
@@ -28,13 +30,10 @@ public class PostController {
 	
 	private final PostReactionService postReactionService;
 	private final PostService postService;
-	private final UserService userService;
 	
-	public PostController(PostReactionService postReactionService, PostService postService,
-			UserService userService) {
+	public PostController(PostReactionService postReactionService, PostService postService) {
 		this.postReactionService = postReactionService;
 		this.postService = postService;
-		this.userService = userService;
 	}
 	
 	@GetMapping
@@ -64,22 +63,15 @@ public class PostController {
     }
 	
 	@PostMapping("/{postId}/{reaction}")
-    public ResponseEntity<?> reactToPost(@PathVariable String postId,
+    public ResponseEntity<ResPostReactionDTO> reactToPost(@PathVariable String postId,
                                          @PathVariable String reaction) {
-		String email = SecurityUtil.getCurrentUserLogin().isPresent() ? SecurityUtil.getCurrentUserLogin().get() : "";
-		Users currentUserDB = this.userService.handleGetUserByUsernames(email);
-        try {
-            postReactionService.reactToPost(postId, currentUserDB.getId(), reaction);
-            return ResponseEntity.ok("Reaction recorded");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        postReactionService.reactToPost(postId, reaction);
+        return ResponseEntity.ok(postReactionService.reactToPost(postId, reaction));
     }
 
     @GetMapping("/{postId}/reaction-summary")
     public ResponseEntity<?> getReactionSummary(@PathVariable String postId) {
-        ReactionSummaryDTO summary = postReactionService.getReactionSummary(postId);
-        return ResponseEntity.ok(summary);
+        return ResponseEntity.ok(postReactionService.getReactionSummary(postId));
     }
 
 }

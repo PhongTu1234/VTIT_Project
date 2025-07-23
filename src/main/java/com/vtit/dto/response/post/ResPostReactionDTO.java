@@ -5,8 +5,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ResPostSummaryDTO {
+public class ResPostReactionDTO {
 	private Integer id;
 	private String content;
 	private String authorName;
+	private String reactionType;
 }

@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.dto.request.borrowing.ReqCreateBorrowingDTO;
 import com.vtit.dto.request.borrowing.ReqUpdateBorrowingDTO;
+import com.vtit.dto.response.User.ResUserSummartDTO;
+import com.vtit.dto.response.book.ResBookSummaryDTO;
 import com.vtit.dto.response.borrowing.ResBorrowingDTO;
 import com.vtit.dto.response.borrowing.ResCreateBorrowingDTO;
 import com.vtit.dto.response.borrowing.ResUpdateBorrowingDTO;
@@ -23,99 +25,160 @@ import com.vtit.reponsitory.BorrowingRepository;
 import com.vtit.reponsitory.UserRepository;
 import com.vtit.service.BorrowingService;
 import com.vtit.utils.IdValidator;
+import com.vtit.utils.SecurityUtil;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 public class BorrowingServiceImpl implements BorrowingService {
 
-    private final BorrowingRepository borrowingRepo;
-    private final UserRepository userRepo;
-    private final BookRepository bookRepo;
-    
-	public BorrowingServiceImpl(BorrowingRepository borrowingRepo, UserRepository userRepo, BookRepository bookRepo) {
-		this.borrowingRepo = borrowingRepo;
-		this.userRepo = userRepo;
-		this.bookRepo = bookRepo;
+	private final BorrowingRepository borrowingRepository;
+	private final UserRepository userRepository;
+	private final BookRepository bookRepository;
+	private final SecurityUtil securityUtil;
+
+	public BorrowingServiceImpl(BorrowingRepository borrowingRepository, UserRepository userRepository,
+			BookRepository bookRepository, SecurityUtil securityUtil) {
+		this.borrowingRepository = borrowingRepository;
+		this.userRepository = userRepository;
+		this.bookRepository = bookRepository;
+		this.securityUtil = securityUtil;
 	}
 
-    private ResBorrowingDTO mapToDTO(Borrowing b) {
-    	ResBorrowingDTO dto = new ResBorrowingDTO();
-        dto.setId(b.getId());
-        dto.setUserId(b.getUser().getId());
-        dto.setBookId(b.getBook().getId());
-        dto.setBorrowDate(b.getBorrowDate());
-        dto.setReturnDate(b.getReturnDate());
-        return dto;
-    }
-
-    @Override
-    public ResultPaginationDTO findAll(Specification<Borrowing> spec, Pageable pageable) {
-    	Page<Borrowing> pageBorrowing = borrowingRepo.findAll(spec, pageable);
+	@Override
+	public ResultPaginationDTO findAll(Specification<Borrowing> spec, Pageable pageable) {
+		Page<Borrowing> pageBorrowing = borrowingRepository.findAll(spec, pageable);
 		ResultPaginationDTO rs = new ResultPaginationDTO();
 		ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
-		
+
 		mt.setPage(pageable.getPageNumber() + 1);
 		mt.setPageSize(pageable.getPageSize());
 		mt.setPages(pageBorrowing.getTotalPages());
 		mt.setTotals((int) pageBorrowing.getTotalElements());
-		
+
 		rs.setMeta(mt);
 		rs.setResult(pageBorrowing.getContent());
 		return rs;
-    }
+	}
 
-    @Override
-    public ResBorrowingDTO findById(Integer id) {
-        Borrowing borrowing = borrowingRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Borrowing not found with id: " + id));
-        return mapToDTO(borrowing);
-    }
+	@Override
+	public ResBorrowingDTO findById(String id) {
+		Integer intId = IdValidator.validateAndParse(id);
+		Borrowing borrowing = borrowingRepository.findById(intId)
+				.orElseThrow(() -> new ResourceNotFoundException("Borrowing not found with id: " + id));
+		return convertToResBorrowingDTO(borrowing);
+	}
 
-    @Override
-    public ResCreateBorrowingDTO create(ReqCreateBorrowingDTO dto) {
-        Users user = userRepo.findById(dto.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Book book = bookRepo.findById(dto.getBookId())
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
+	@Override
+	public ResCreateBorrowingDTO create(ReqCreateBorrowingDTO dto) {
+		return convertToResCreateBorrowingDTO(borrowingRepository.save(convertToEntity(dto)));
+	}
 
-        Borrowing b = new Borrowing();
-        b.setUser(user);
-        b.setBook(book);
-        b.setBorrowDate(dto.getBorrowDate());
-        b.setReturnDate(dto.getReturnDate());
+	@Override
+	public ResUpdateBorrowingDTO update(ReqUpdateBorrowingDTO dto) {
+		Borrowing b = borrowingRepository.findById(dto.getId())
+				.orElseThrow(() -> new ResourceNotFoundException("Borrowing not found with id: " + dto.getId()));
+		return convertToResUpdateBorrowingDTO(borrowingRepository.save(convertToEntity(dto)));
+	}
 
-        return mapToDTO(borrowingRepo.save(b));
-    }
+	@Override
+	public void delete(String id) {
+		Integer intId = IdValidator.validateAndParse(id);
+		Borrowing borrowing = borrowingRepository.findById(intId)
+				.orElseThrow(() -> new ResourceNotFoundException("Borrowing not found"));
+		borrowingRepository.delete(borrowing);
+	}
 
-    @Override
-    public ResUpdateBorrowingDTO update(ReqUpdateBorrowingDTO dto) {
-        Borrowing b = borrowingRepo.findById(dto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Borrowing not found"));
+	public ResBorrowingDTO convertToResBorrowingDTO(Borrowing borrowing) {
+		ResBorrowingDTO dto = new ResBorrowingDTO();
+		dto.setId(borrowing.getId());
 
-        if (dto.getUserId() != null) {
-            Users user = userRepo.findById(dto.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-            b.setUser(user);
-        }
+		ResUserSummartDTO userSummary = new ResUserSummartDTO();
+		userSummary.setFullname(borrowing.getUser().getFullname());
+		dto.setUser(userSummary);
 
-        if (dto.getBookId() != null) {
-            Book book = bookRepo.findById(dto.getBookId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
-            b.setBook(book);
-        }
+		ResBookSummaryDTO bookSummary = new ResBookSummaryDTO();
+		bookSummary.setAuthor(borrowing.getBook().getAuthor());
+		bookSummary.setTitle(borrowing.getBook().getTitle());
+		bookSummary.setPublisher(borrowing.getBook().getPublisher());
+		bookSummary.setPublishedDate(borrowing.getBook().getPublishedDate());
+		dto.setBook(bookSummary);
 
-        b.setBorrowDate(dto.getBorrowDate());
-        b.setReturnDate(dto.getReturnDate());
+		dto.setBorrowDate(borrowing.getBorrowDate());
+		dto.setReturnDate(borrowing.getReturnDate());
+		dto.setCreatedBy(borrowing.getCreatedBy());
+		dto.setCreatedDate(borrowing.getCreatedDate());
+		dto.setUpdatedBy(borrowing.getUpdatedBy());
+		dto.setUpdatedDate(borrowing.getUpdatedDate());
+		dto.setBorrowDuration(borrowing.getBorrowDuration()); // thêm dòng này nếu response có
+		return dto;
+	}
 
-        return mapToDTO(borrowingRepo.save(b));
-    }
+	public ResCreateBorrowingDTO convertToResCreateBorrowingDTO(Borrowing borrowing) {
+		ResCreateBorrowingDTO dto = new ResCreateBorrowingDTO();
+		dto.setId(borrowing.getId());
 
-    @Override
-    public void delete(String id) {
-    	Integer intId = IdValidator.validateAndParse(id);
-        Borrowing borrowing = borrowingRepo.findById(intId)
-                .orElseThrow(() -> new ResourceNotFoundException("Borrowing not found"));
-        borrowingRepo.delete(borrowing);
-    }
+		ResUserSummartDTO userSummary = new ResUserSummartDTO();
+		userSummary.setFullname(borrowing.getUser().getFullname());
+		dto.setUser(userSummary);
+
+		ResBookSummaryDTO bookSummary = new ResBookSummaryDTO();
+		bookSummary.setAuthor(borrowing.getBook().getAuthor());
+		bookSummary.setTitle(borrowing.getBook().getTitle());
+		bookSummary.setPublisher(borrowing.getBook().getPublisher());
+		bookSummary.setPublishedDate(borrowing.getBook().getPublishedDate());
+		dto.setBook(bookSummary);
+
+		dto.setBorrowDate(borrowing.getBorrowDate());
+		dto.setReturnDate(borrowing.getReturnDate());
+		dto.setCreatedBy(borrowing.getCreatedBy());
+		dto.setCreatedDate(borrowing.getCreatedDate());
+		dto.setBorrowDuration(borrowing.getBorrowDuration()); // thêm dòng này nếu response có
+		return dto;
+	}
+
+	public ResUpdateBorrowingDTO convertToResUpdateBorrowingDTO(Borrowing borrowing) {
+		ResUpdateBorrowingDTO dto = new ResUpdateBorrowingDTO();
+		dto.setId(borrowing.getId());
+
+		ResUserSummartDTO userSummary = new ResUserSummartDTO();
+		userSummary.setFullname(borrowing.getUser().getFullname());
+		dto.setUser(userSummary);
+
+		ResBookSummaryDTO bookSummary = new ResBookSummaryDTO();
+		bookSummary.setAuthor(borrowing.getBook().getAuthor());
+		bookSummary.setTitle(borrowing.getBook().getTitle());
+		bookSummary.setPublisher(borrowing.getBook().getPublisher());
+		bookSummary.setPublishedDate(borrowing.getBook().getPublishedDate());
+		dto.setBook(bookSummary);
+
+		dto.setBorrowDate(borrowing.getBorrowDate());
+		dto.setReturnDate(borrowing.getReturnDate());
+		dto.setUpdatedBy(borrowing.getUpdatedBy());
+		dto.setUpdatedDate(borrowing.getUpdatedDate());
+		dto.setBorrowDuration(borrowing.getBorrowDuration()); // thêm dòng này nếu response có
+		return dto;
+	}
+
+	public Borrowing convertToEntity(ReqCreateBorrowingDTO dto) {
+		Borrowing borrowing = new Borrowing();
+		borrowing.setUser(userRepository.findByEmail(securityUtil.getCurrentUserLogin().get()));
+		borrowing.setBook(bookRepository.findById(dto.getBook().getBookId())
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + dto.getBook().getBookId())));
+		borrowing.setBorrowDate(dto.getBorrowDate());
+		borrowing.setReturnDate(dto.getReturnDate());
+		borrowing.setBorrowDuration(dto.getBorrowDuration()); // thêm dòng này
+		return borrowing;
+	}
+
+	public Borrowing convertToEntity(ReqUpdateBorrowingDTO dto) {
+		Borrowing borrowing = new Borrowing();
+		borrowing.setId(dto.getId());
+		borrowing.setBook(bookRepository.findById(dto.getBook().getBookId())
+				.orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + dto.getBook().getBookId())));
+		borrowing.setBorrowDate(dto.getBorrowDate());
+		borrowing.setReturnDate(dto.getReturnDate());
+		borrowing.setBorrowDuration(dto.getBorrowDuration()); // thêm dòng này
+		return borrowing;
+	}
 }

@@ -13,7 +13,7 @@ import com.vtit.entity.Borrowing;
 
 public interface BorrowingService {
 	ResultPaginationDTO findAll(Specification<Borrowing> spec, Pageable pageable);
-    ResBorrowingDTO findById(Integer id);
+    ResBorrowingDTO findById(String id);
     ResCreateBorrowingDTO create(ReqCreateBorrowingDTO dto);
     ResUpdateBorrowingDTO update(ReqUpdateBorrowingDTO dto);
     void delete(String id);

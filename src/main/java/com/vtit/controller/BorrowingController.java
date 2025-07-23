@@ -30,7 +30,7 @@ public class BorrowingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ResBorrowingDTO> getById(@PathVariable Integer id) {
+    public ResponseEntity<ResBorrowingDTO> getById(@PathVariable String id) {
         return ResponseEntity.ok(borrowingService.findById(id));
     }
 

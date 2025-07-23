@@ -5,6 +5,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.vtit.dto.response.post.ResPostReactionDTO;
+import com.vtit.dto.response.post.ResPostSummaryDTO;
 import com.vtit.dto.response.postReaction.ReactionSummaryDTO;
 import com.vtit.entity.Post;
 import com.vtit.entity.PostReaction;
@@ -15,6 +17,7 @@ import com.vtit.reponsitory.PostRepository;
 import com.vtit.reponsitory.UserRepository;
 import com.vtit.service.PostReactionService;
 import com.vtit.utils.IdValidator;
+import com.vtit.utils.SecurityUtil;
 
 @Service
 public class PostReactionServiceImpl implements PostReactionService {
@@ -22,25 +25,26 @@ public class PostReactionServiceImpl implements PostReactionService {
 	private final PostReactionRepository postReactionRepository;
 	private final PostRepository postRepository;
 	private final UserRepository userRepository;
+	private final SecurityUtil securityUtil;
 
 	public PostReactionServiceImpl(PostReactionRepository postReactionRepository, UserRepository userRepository,
-			PostRepository postRepository) {
+			PostRepository postRepository, SecurityUtil securityUtil) {
 		this.postReactionRepository = postReactionRepository;
 		this.userRepository = userRepository;
 		this.postRepository = postRepository;
-
+		this.securityUtil = securityUtil;
 	}
 
-	public void reactToPost(String postId, Integer userId, String reactionType) {
+	public ResPostReactionDTO reactToPost(String postId, String reactionType) {
 		if (!reactionType.equalsIgnoreCase("LIKE") && !reactionType.equalsIgnoreCase("DISLIKE")) {
-			throw new IllegalArgumentException("Reaction type must be LIKE or DISLIKE");
+			throw new IllegalArgumentException("Loại phản ứng phải là THÍCH hoặc KHÔNG THÍCH");
 		}
 
 		Integer postIdInt = IdValidator.validateAndParse(postId);
 
 		Post post = postRepository.findById(postIdInt)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found"));
-		Users user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+		Users user = userRepository.findByEmail(securityUtil.getCurrentUserLogin().get());
 
 		Optional<PostReaction> existing = postReactionRepository.findByPostAndUser(post, user);
 		if (existing.isPresent()) {
@@ -59,6 +63,12 @@ public class PostReactionServiceImpl implements PostReactionService {
 			newReaction.setCreatedAt(Instant.now());
 			postReactionRepository.save(newReaction);
 		}
+		ResPostReactionDTO postSummary = new ResPostReactionDTO();
+		postSummary.setId(post.getId());
+		postSummary.setContent(post.getContent());
+		postSummary.setAuthorName(post.getUser().getFullname());
+		postSummary.setReactionType(reactionType.toUpperCase());
+		return postSummary;
 	}
 
 	public ReactionSummaryDTO getReactionSummary(String postId) {
@@ -68,7 +78,13 @@ public class PostReactionServiceImpl implements PostReactionService {
 
 		long likes = postReactionRepository.countByPostAndReactionType(post, "LIKE");
 		long dislikes = postReactionRepository.countByPostAndReactionType(post, "DISLIKE");
-
-		return new ReactionSummaryDTO(likes, dislikes);
+		ReactionSummaryDTO reactionSummary = new ReactionSummaryDTO();
+		reactionSummary.setPostId(postIdInt);
+		reactionSummary.setPostTitle(post.getTitle() != null ? post.getTitle() : "No Title");
+		reactionSummary.setAuthorName(post.getUser().getFullname() != null ? post.getUser().getFullname() : "Unknown Author");
+		reactionSummary.setLikeCount(likes);
+		reactionSummary.setDislikeCount(dislikes);
+		
+		return reactionSummary;
 	}
 }
