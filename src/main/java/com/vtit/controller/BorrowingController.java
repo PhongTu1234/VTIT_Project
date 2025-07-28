@@ -5,6 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.turkraft.springfilter.boot.Filter;
 import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.dto.request.borrowing.ReqCreateBorrowingDTO;
 import com.vtit.dto.request.borrowing.ReqUpdateBorrowingDTO;
@@ -25,7 +26,7 @@ public class BorrowingController {
 	}
 
     @GetMapping
-    public ResponseEntity<ResultPaginationDTO> getAll(Specification<Borrowing> spec, Pageable pageable) {
+    public ResponseEntity<ResultPaginationDTO> getAll(@Filter Specification<Borrowing> spec, Pageable pageable) {
         return ResponseEntity.ok(borrowingService.findAll(spec, pageable));
     }
 

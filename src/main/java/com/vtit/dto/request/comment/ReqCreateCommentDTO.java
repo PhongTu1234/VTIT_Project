@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RepCreateCommentDTO {
+public class ReqCreateCommentDTO {
     private String content;
     private Integer postId;
    

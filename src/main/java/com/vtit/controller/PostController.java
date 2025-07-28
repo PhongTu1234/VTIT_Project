@@ -14,15 +14,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.turkraft.springfilter.boot.Filter;
 import com.vtit.dto.common.ResultPaginationDTO;
+import com.vtit.dto.request.post.ReqCreatePostDTO;
+import com.vtit.dto.request.post.ReqUpdatePostDTO;
+import com.vtit.dto.response.post.ResCreatePostDTO;
+import com.vtit.dto.response.post.ResPostDTO;
 import com.vtit.dto.response.post.ResPostReactionDTO;
-import com.vtit.dto.response.post.ResPostSummaryDTO;
+import com.vtit.dto.response.post.ResUpdatePostDTO;
 import com.vtit.dto.response.postReaction.ReactionSummaryDTO;
 import com.vtit.entity.Post;
-import com.vtit.entity.Users;
 import com.vtit.service.PostReactionService;
 import com.vtit.service.PostService;
-import com.vtit.service.UserService;
-import com.vtit.utils.SecurityUtil;
 
 @RestController
 @RequestMapping("/api/v1/library/posts")
@@ -42,17 +43,17 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Post> getById(@PathVariable String id) {
+    public ResponseEntity<ResPostDTO> getById(@PathVariable String id) {
         return ResponseEntity.ok(postService.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Post> create(@RequestBody Post post) {
+    public ResponseEntity<ResCreatePostDTO> create(@RequestBody ReqCreatePostDTO post) {
         return ResponseEntity.ok(postService.create(post));
     }
 
     @PutMapping
-    public ResponseEntity<Post> update(@RequestBody Post post) {
+    public ResponseEntity<ResUpdatePostDTO> update(@RequestBody ReqUpdatePostDTO post) {
         return ResponseEntity.ok(postService.update(post));
     }
 
@@ -65,12 +66,11 @@ public class PostController {
 	@PostMapping("/{postId}/{reaction}")
     public ResponseEntity<ResPostReactionDTO> reactToPost(@PathVariable String postId,
                                          @PathVariable String reaction) {
-        postReactionService.reactToPost(postId, reaction);
         return ResponseEntity.ok(postReactionService.reactToPost(postId, reaction));
     }
 
     @GetMapping("/{postId}/reaction-summary")
-    public ResponseEntity<?> getReactionSummary(@PathVariable String postId) {
+    public ResponseEntity<ReactionSummaryDTO> getReactionSummary(@PathVariable String postId) {
         return ResponseEntity.ok(postReactionService.getReactionSummary(postId));
     }
 

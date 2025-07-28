@@ -1,8 +1,15 @@
 package com.vtit.service.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import com.vtit.dto.request.comment.RepCreateCommentDTO;
+import com.vtit.dto.common.ResultPaginationDTO;
+import com.vtit.dto.request.comment.ReqCreateCommentDTO;
 import com.vtit.dto.request.comment.ReqUpdateCommentDTO;
 import com.vtit.dto.response.comment.ResCommentDTO;
 import com.vtit.dto.response.comment.ResCreateCommentDTO;
@@ -11,10 +18,12 @@ import com.vtit.dto.response.post.ResPostSummaryDTO;
 import com.vtit.entity.Comment;
 import com.vtit.entity.Post;
 import com.vtit.exception.IdInvalidException;
+import com.vtit.exception.ResourceNotFoundException;
 import com.vtit.reponsitory.CommentRepository;
 import com.vtit.reponsitory.PostRepository;
 import com.vtit.reponsitory.UserRepository;
 import com.vtit.service.CommentService;
+import com.vtit.utils.IdValidator;
 import com.vtit.utils.SecurityUtil;
 
 @Service
@@ -34,20 +43,66 @@ public class CommentServiceImpl implements CommentService {
 		this.securityUtil = securityUtil;
 	}
 	
+	@Override
+	public ResultPaginationDTO findAll(Specification<Comment> spec, Pageable pageable) {
+		Page<Comment> pageComments = commentRepository.findAll(spec, pageable);
+		ResultPaginationDTO rs = new ResultPaginationDTO();
+		ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
+		List<ResCommentDTO> commentDTOs = pageComments.getContent().stream()
+				.map(this::convertToResCommentDTO)
+				.collect(Collectors.toList());
+		
+		mt.setPage(pageable.getPageNumber() + 1);
+		mt.setPageSize(pageable.getPageSize());
+		mt.setPages(pageComments.getTotalPages());
+		mt.setTotals((int) pageComments.getTotalElements());
+		
+		rs.setMeta(mt);
+		rs.setResult(commentDTOs);
+		return rs;
+	}
 	
+    @Override
+    public ResCommentDTO findById(String id) {
+    	Integer commentId = IdValidator.validateAndParse(id);
+    	Comment comment = commentRepository.findById(commentId)
+        		.orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + commentId));
+        return convertToResCommentDTO(comment);
+    }
 
-	public Comment convertToEntity(RepCreateCommentDTO dto) {
+    @Override
+    public ResCreateCommentDTO create(ReqCreateCommentDTO request) {
+        return convertToResCreateCommentDTO(commentRepository.save(convertToEntity(request)));
+    }
+
+    @Override
+    public ResUpdateCommentDTO update(ReqUpdateCommentDTO comment) {
+        Comment commentDB = commentRepository.findById(comment.getId())
+        		.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Comment với id = " + comment.getId()));
+        return convertToResUpdateCommentDTO(commentRepository.save(convertToEntity(comment, commentDB)));
+    }
+
+    @Override
+    public void delete(String id) {
+    	Integer postId = IdValidator.validateAndParse(id);
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + id));
+        post.setIsDeleted(true);
+        postRepository.save(post);
+    }
+
+	public Comment convertToEntity(ReqCreateCommentDTO dto) {
 		Comment comment = new Comment();
 		comment.setContent(dto.getContent());
-		comment.setPost(postRepository.findById(dto.getPostId()).isPresent() ? postRepository.findById(dto.getPostId()).get() : null);
+		Post postDB = postRepository.findById(dto.getPostId())
+				.orElseThrow(() -> new IdInvalidException("Không tìm thấy Post với id = " + dto.getPostId()));
+		comment.setPost(postDB);
 		comment.setUser(userRepository.findByEmail(securityUtil.getCurrentUserLogin().get()));
 		return comment;
 	}
 
-	public Comment convertToEntity(ReqUpdateCommentDTO dto) {
-		Comment comment = commentRepository.findById(dto.getId())
-				.orElseThrow(() -> new IdInvalidException("Không tìm thấy Comment với id = " + dto.getId()));
-		comment.setContent(dto.getContent());
+	public Comment convertToEntity(ReqUpdateCommentDTO dto, Comment comment) {
+		comment.setContent(dto.getContent() != null ? dto.getContent() : null);
 		return comment;
 	}
 

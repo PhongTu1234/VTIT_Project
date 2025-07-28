@@ -20,4 +20,5 @@ public class ResBorrowingDTO {
 	    private Instant createdDate;
 	    private String updatedBy;
 	    private Instant updatedDate;
+	    private String status;
 }

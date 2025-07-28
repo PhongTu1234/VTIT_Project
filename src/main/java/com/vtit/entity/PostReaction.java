@@ -1,5 +1,6 @@
 package com.vtit.entity;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 import jakarta.persistence.Column;
@@ -22,7 +23,7 @@ import lombok.Data;
 @Table(name = "post_reaction", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"post_id", "user_id"})
 })
-public class PostReaction {
+public class PostReaction implements Serializable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
