@@ -32,6 +32,8 @@ import jakarta.persistence.TemporalType;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @SuppressWarnings("serial")
@@ -51,7 +53,6 @@ public class Users implements Serializable {
     private String username;
 
     @Column(nullable = false, length = 255)
-    @NotBlank(message = "Password không được để trống")
     private String password;
 
     @Column(length = 100)
@@ -62,6 +63,8 @@ public class Users implements Serializable {
     private String email;
 
     @Column(length = 20)
+    @Size(max = 20, message = "Số điện thoại không được vượt quá 20 ký tự")
+    @Pattern(regexp = "^[0-9+()\\-\\s]*$", message = "Số điện thoại không hợp lệ")
     private String phone;
 
     @Column(length = 255)

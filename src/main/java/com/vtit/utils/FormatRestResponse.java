@@ -31,6 +31,10 @@ public class FormatRestResponse implements ResponseBodyAdvice<Object> {
             Class<? extends HttpMessageConverter<?>> selectedConverterType,
             ServerHttpRequest request,
             ServerHttpResponse response) {
+    	
+    	if (body instanceof org.springframework.core.io.Resource) {
+            return body;
+        }
 
         if (body instanceof RestResponseDTO) {
             return body;

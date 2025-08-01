@@ -1,5 +1,7 @@
 package com.vtit.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -8,6 +10,7 @@ import com.vtit.dto.request.post.ReqCreatePostDTO;
 import com.vtit.dto.request.post.ReqUpdatePostDTO;
 import com.vtit.dto.response.post.ResCreatePostDTO;
 import com.vtit.dto.response.post.ResPostDTO;
+import com.vtit.dto.response.post.ResTopPostDTO;
 import com.vtit.dto.response.post.ResUpdatePostDTO;
 import com.vtit.entity.Post;
 
@@ -17,4 +20,5 @@ public interface PostService {
     ResCreatePostDTO create(ReqCreatePostDTO post);
     ResUpdatePostDTO update(ReqUpdatePostDTO dto);
     void delete(String id);
+    List<ResTopPostDTO> getTop5LikedPosts();
 }

@@ -9,8 +9,8 @@ import lombok.Setter;
 @Setter
 public class ResRoleDTO {
     private Integer id;
-    private String code;
     private String name;
+    private String description;
     private String createdBy;
     private Instant createdDate;
     private String updatedBy;

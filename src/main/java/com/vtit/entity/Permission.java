@@ -39,6 +39,10 @@ public class Permission implements Serializable {
 
     @Column(length = 100)
     private String name;
+    
+    private String method;
+    
+    private String module;
 
     @Column(name = "created_date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")

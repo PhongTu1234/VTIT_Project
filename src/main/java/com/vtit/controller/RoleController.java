@@ -10,6 +10,11 @@ import org.springframework.web.bind.annotation.*;
 
 import com.turkraft.springfilter.boot.Filter;
 import com.vtit.dto.common.ResultPaginationDTO;
+import com.vtit.dto.request.role.ReqCreateRoleDTO;
+import com.vtit.dto.request.role.ReqUpdateRoleDTO;
+import com.vtit.dto.response.role.ResCreateRoleDTO;
+import com.vtit.dto.response.role.ResRoleDTO;
+import com.vtit.dto.response.role.ResUpdateRoleDTO;
 import com.vtit.entity.Roles;
 import com.vtit.service.RoleService;
 import jakarta.persistence.EntityNotFoundException;
@@ -31,19 +36,17 @@ public class RoleController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<Roles> getById(@PathVariable String id) {
-		return roleService.findById(id)
-				.map(ResponseEntity::ok)
-				.orElseThrow(() -> new EntityNotFoundException("Không tìm thấy quyền với id = " + id));
+	public ResponseEntity<ResRoleDTO> getById(@PathVariable String id) {
+		return ResponseEntity.ok(roleService.findById(id));
 	}
 
 	@PostMapping
-	public ResponseEntity<Roles> create(@Valid @RequestBody Roles role) {
+	public ResponseEntity<ResCreateRoleDTO> create(@Valid @RequestBody ReqCreateRoleDTO role) {
 		return ResponseEntity.status(HttpStatus.SC_CREATED).body(roleService.create(role));
 	}
 
 	@PutMapping
-	public ResponseEntity<Roles> update(@Valid @RequestBody Roles role) {
+	public ResponseEntity<ResUpdateRoleDTO> update(@Valid @RequestBody ReqUpdateRoleDTO role) {
 		return ResponseEntity.ok(roleService.update(role));
 	}
 

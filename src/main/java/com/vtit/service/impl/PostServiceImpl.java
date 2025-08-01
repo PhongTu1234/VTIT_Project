@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import com.vtit.dto.response.User.ResUserSummartDTO;
 import com.vtit.dto.response.book.ResBookDTO;
 import com.vtit.dto.response.post.ResCreatePostDTO;
 import com.vtit.dto.response.post.ResPostDTO;
+import com.vtit.dto.response.post.ResTopPostDTO;
 import com.vtit.dto.response.post.ResUpdatePostDTO;
 import com.vtit.dto.response.postReaction.ReactionSummaryDTO;
 import com.vtit.entity.Post;
@@ -105,6 +107,11 @@ public class PostServiceImpl implements PostService{
             existingPost.setContent(dto.getContent());
         }
         return existingPost;
+    }
+    
+    @Override
+    public List<ResTopPostDTO> getTop5LikedPosts() {
+        return postRepository.findTopLikedPosts(PageRequest.of(0, 5));
     }
 
     public ResPostDTO convertToResPostDTO(Post post) {

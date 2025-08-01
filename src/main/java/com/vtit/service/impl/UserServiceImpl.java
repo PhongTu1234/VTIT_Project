@@ -1,6 +1,5 @@
 package com.vtit.service.impl;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.dto.request.User.ReqCreateUserDTO;
@@ -68,15 +68,12 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public ResCreateUserDTO create(ReqCreateUserDTO user) {
-		// Kiểm tra trùng username
 		if (userRepository.existsByUsername(user.getUsername())) {
 			throw new DuplicateResourceException("Username '" + user.getUsername() + "' đã tồn tại");
 		}
-		// Kiểm tra trùng email
 		if (user.getEmail() != null && userRepository.existsByEmail(user.getEmail())) {
 			throw new DuplicateResourceException("Email '" + user.getEmail() + "' đã tồn tại");
 		}
-		// Kiểm tra trùng phone
 		if (user.getPhone() != null && userRepository.existsByPhone(user.getPhone())) {
 			throw new DuplicateResourceException("Phone '" + user.getPhone() + "' đã tồn tại");
 		}
@@ -87,39 +84,34 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public ResUpdateUserDTO update(ReqUpdateUserDTO updatedUser) {
-		Users existingUser = userRepository.findById(updatedUser.getId())
-			.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với id = " + updatedUser.getId()));
+	public ResUpdateUserDTO update(ReqUpdateUserDTO dto) {
+		Users user = userRepository.findById(dto.getId())
+			.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với id = " + dto.getId()));
 
-		// Kiểm tra trùng thông tin
-		if (updatedUser.getUsername() != null &&
-			userRepository.existsByUsernameAndIdNot(updatedUser.getUsername(), updatedUser.getId())) {
-			throw new DuplicateResourceException("Username '" + updatedUser.getUsername() + "' đã tồn tại");
+		if (dto.getUsername() != null && userRepository.existsByUsernameAndIdNot(dto.getUsername(), dto.getId())) {
+			throw new DuplicateResourceException("Username '" + dto.getUsername() + "' đã tồn tại");
 		}
-		if (updatedUser.getEmail() != null &&
-			userRepository.existsByEmailAndIdNot(updatedUser.getEmail(), updatedUser.getId())) {
-			throw new DuplicateResourceException("Email '" + updatedUser.getEmail() + "' đã tồn tại");
+		if (dto.getEmail() != null && userRepository.existsByEmailAndIdNot(dto.getEmail(), dto.getId())) {
+			throw new DuplicateResourceException("Email '" + dto.getEmail() + "' đã tồn tại");
 		}
-		if (updatedUser.getPhone() != null &&
-			userRepository.existsByPhoneAndIdNot(updatedUser.getPhone(), updatedUser.getId())) {
-			throw new DuplicateResourceException("Phone '" + updatedUser.getPhone() + "' đã tồn tại");
-		}
-
-		// Cập nhật mật khẩu nếu có
-		if (updatedUser.getPassword() != null && !updatedUser.getPassword().isBlank()) {
-			existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+		if (StringUtils.hasText(dto.getPhone()) && userRepository.existsByPhoneAndIdNot(dto.getPhone(), dto.getId())) {
+			throw new DuplicateResourceException("Phone '" + dto.getPhone() + "' đã tồn tại");
 		}
 
 		// Cập nhật thông tin
-		if (updatedUser.getUsername() != null) existingUser.setUsername(updatedUser.getUsername());
-		if (updatedUser.getFullname() != null) existingUser.setFullname(updatedUser.getFullname());
-		if (updatedUser.getEmail() != null) existingUser.setEmail(updatedUser.getEmail());
-		if (updatedUser.getPhone() != null) existingUser.setPhone(updatedUser.getPhone());
-		if (updatedUser.getAddress() != null) existingUser.setAddress(updatedUser.getAddress());
-		if (updatedUser.getBirthday() != null) existingUser.setBirthday(updatedUser.getBirthday());
+		if (StringUtils.hasText(dto.getUsername())) 
+			user.setUsername(dto.getUsername());
+		if (StringUtils.hasText(dto.getFullname())) user.setFullname(dto.getFullname());
+		if (StringUtils.hasText(dto.getEmail())) user.setEmail(dto.getEmail());
+		if (StringUtils.hasText(dto.getPhone())) user.setPhone(dto.getPhone());
+		if (StringUtils.hasText(dto.getAddress())) user.setAddress(dto.getAddress());
+		if (dto.getBirthday() != null) user.setBirthday(dto.getBirthday());
+		if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+			user.setPassword(passwordEncoder.encode(dto.getPassword()));
+		}
 
-		userRepository.save(existingUser);
-		return convertToResUpdateUserDTO(existingUser);
+		userRepository.save(user);
+		return convertToResUpdateUserDTO(user);
 	}
 
 	@Override
@@ -131,8 +123,8 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public Users handleGetUserByUsername(String username) {
-		return userRepository.findByEmail(username);
+	public Users handleGetUserByUsername(String email) {
+		return userRepository.findByEmail(email);
 	}
 
 	@Override
@@ -197,7 +189,7 @@ public class UserServiceImpl implements UserService {
 		dto.setUpdateBy(user.getUpdatedBy());
 		return dto;
 	}
-	
+
 	public Users convertToEntity(ReqCreateUserDTO dto) {
 	    Users user = new Users();
 	    user.setUsername(dto.getUsername());
@@ -210,18 +202,4 @@ public class UserServiceImpl implements UserService {
 	    user.setRefreshToken(null);
 	    return user;
 	}
-
-	public Users convertToEntity(ReqUpdateUserDTO dto) {
-	    Users user = new Users();
-	    user.setId(dto.getId());
-	    user.setUsername(dto.getUsername());
-	    user.setPassword(dto.getPassword());
-	    user.setFullname(dto.getFullname());
-	    user.setEmail(dto.getEmail());
-	    user.setPhone(dto.getPhone());
-	    user.setAddress(dto.getAddress());
-	    user.setBirthday(dto.getBirthday());
-	    return user;
-	}
-
 }

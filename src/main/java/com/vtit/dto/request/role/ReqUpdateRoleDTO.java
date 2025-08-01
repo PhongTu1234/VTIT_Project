@@ -1,5 +1,9 @@
 package com.vtit.dto.request.role;
 
+import java.util.List;
+
+import com.vtit.dto.request.permission.ReqPermissionIdDTO;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,6 +11,7 @@ import lombok.Setter;
 @Setter
 public class ReqUpdateRoleDTO {
 	private Integer id;
-    private String code;
     private String name;
+    private String description;
+    private List<ReqPermissionIdDTO> permissions;
 }

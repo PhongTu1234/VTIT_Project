@@ -63,8 +63,8 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public ResCreatePermissionDTO create(ReqCreatePermissionDTO dto) {
-        if (permissionRepository.existsByCode(dto.getCode())) {
-            throw new DuplicateResourceException("Code '" + dto.getCode() + "' đã tồn tại");
+        if (permissionRepository.existsByCodeAndMethodAndModule(dto.getCode(), dto.getMethod(), dto.getModule())) {
+            throw new DuplicateResourceException("Permission đã tồn tại");
         }
 
         Permission permission = new Permission();
@@ -81,8 +81,8 @@ public class PermissionServiceImpl implements PermissionService {
             .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy permission với id = " + dto.getId()));
 
         if (dto.getCode() != null && !dto.getCode().equals(permission.getCode()) &&
-            permissionRepository.existsByCode(dto.getCode())) {
-            throw new DuplicateResourceException("Code '" + dto.getCode() + "' đã tồn tại");
+            permissionRepository.existsByCodeAndMethodAndModule(dto.getCode(), dto.getMethod(), dto.getModule())) {
+            throw new DuplicateResourceException("Permission đã tồn tại");
         }
 
         permission.setCode(dto.getCode());

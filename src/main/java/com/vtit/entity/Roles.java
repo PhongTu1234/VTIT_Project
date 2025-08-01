@@ -35,11 +35,10 @@ public class Roles implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true, length = 50)
-    private String code;
-
     @Column(length = 100)
     private String name;
+    
+    private String description;
 
     @Column(name = "created_date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")

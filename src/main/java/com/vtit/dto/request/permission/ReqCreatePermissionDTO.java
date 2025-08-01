@@ -8,4 +8,6 @@ import lombok.Setter;
 public class ReqCreatePermissionDTO {
     private String code;
     private String name;
+    private	String method;
+    private String module;
 }
