@@ -9,6 +9,7 @@ import lombok.Setter;
 import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.vtit.dto.request.role.ReqRoleIdDTO;
 
 @Getter
 @Setter
@@ -34,5 +35,5 @@ public class ReqCreateUserDTO {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     private Instant birthday;
 
-
+    private ReqRoleIdDTO role;
 }

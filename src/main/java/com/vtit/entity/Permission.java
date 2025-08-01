@@ -39,6 +39,10 @@ public class Permission implements Serializable {
 
     @Column(length = 100)
     private String name;
+    
+    private String method;
+    
+    private String module;
 
     @Column(name = "created_date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")
@@ -78,6 +82,11 @@ public class Permission implements Serializable {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JsonIgnore
-    @JoinTable(name = "Role_Permission", joinColumns = @JoinColumn(name = "role_id"), inverseJoinColumns = @JoinColumn(name = "permission_id"))
+    @JoinTable(
+        name = "Role_Permission", 
+        joinColumns = @JoinColumn(name = "permission_id"), 
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private List<Roles> role_Permission;
+
 }

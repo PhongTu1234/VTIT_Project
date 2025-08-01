@@ -1,6 +1,7 @@
 package com.vtit.dto.response.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.vtit.dto.response.role.ResRoleSummaryDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,9 +22,10 @@ public class ResLoginDTO {
 	@NoArgsConstructor
 	@AllArgsConstructor
 	public static class UserInfo {
-		private long id;
+		private Integer id;
 		private String username;
 		private String email;
+		private ResRoleSummaryDTO role;
 	}
 	
 	@Getter

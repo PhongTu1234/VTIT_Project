@@ -1,5 +1,7 @@
 package com.vtit.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +21,13 @@ import com.vtit.dto.request.post.ReqUpdatePostDTO;
 import com.vtit.dto.response.post.ResCreatePostDTO;
 import com.vtit.dto.response.post.ResPostDTO;
 import com.vtit.dto.response.post.ResPostReactionDTO;
+import com.vtit.dto.response.post.ResTopPostDTO;
 import com.vtit.dto.response.post.ResUpdatePostDTO;
 import com.vtit.dto.response.postReaction.ReactionSummaryDTO;
 import com.vtit.entity.Post;
 import com.vtit.service.PostReactionService;
 import com.vtit.service.PostService;
+import com.vtit.utils.annotation.ApiMessage;
 
 @RestController
 @RequestMapping("/api/v1/library/posts")
@@ -72,6 +76,13 @@ public class PostController {
     @GetMapping("/{postId}/reaction-summary")
     public ResponseEntity<ReactionSummaryDTO> getReactionSummary(@PathVariable String postId) {
         return ResponseEntity.ok(postReactionService.getReactionSummary(postId));
+    }
+    
+    @GetMapping("/top-liked")
+    @ApiMessage("Get top 5 liked posts")
+    public ResponseEntity<List<ResTopPostDTO>> getTopLikedPosts() {
+        List<ResTopPostDTO> topPosts = postService.getTop5LikedPosts();
+        return ResponseEntity.ok(topPosts);
     }
 
 }
