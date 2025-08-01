@@ -24,6 +24,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Service;
 
 import com.nimbusds.jose.util.Base64;
+import com.vtit.dto.response.User.ResUserInsideTokenDTO;
 import com.vtit.dto.response.auth.ResLoginDTO;
 
 @Service
@@ -62,7 +63,12 @@ public class SecurityUtil {
 		}
 	}
 	
-	public String createAccessToken(String email, ResLoginDTO.UserInfo userInfo) {
+	public String createAccessToken(String email, ResLoginDTO resLoginDTO) {
+		ResUserInsideTokenDTO userToken = new ResUserInsideTokenDTO();
+		userToken.setId(resLoginDTO.getUserInfo().getId());
+		userToken.setUsername(resLoginDTO.getUserInfo().getUsername());
+		userToken.setEmail(resLoginDTO.getUserInfo().getEmail());
+		
 	    Instant now = Instant.now();
 	    Instant validity = now.plus(this.accessTokenExpiration, ChronoUnit.SECONDS);
 	    
@@ -74,7 +80,7 @@ public class SecurityUtil {
 	        .issuedAt(now)
 	        .expiresAt(validity)
 	        .subject(email)
-	        .claim("user", userInfo)
+	        .claim("user", userToken)
 	        .claim("permission", permissions)
 	        .build();
 
@@ -83,6 +89,11 @@ public class SecurityUtil {
 	}
 	
 	public String createRefreshToken(String email, ResLoginDTO resLoginDTO) {
+		ResUserInsideTokenDTO userToken = new ResUserInsideTokenDTO();
+		userToken.setId(resLoginDTO.getUserInfo().getId());
+		userToken.setUsername(resLoginDTO.getUserInfo().getUsername());
+		userToken.setEmail(resLoginDTO.getUserInfo().getEmail());
+		
 	    Instant now = Instant.now();
 	    Instant validity = now.plus(this.refreshTokenExpiration, ChronoUnit.SECONDS);
 
@@ -90,7 +101,7 @@ public class SecurityUtil {
 	        .issuedAt(now)
 	        .expiresAt(validity)
 	        .subject(email)
-	        .claim("user", resLoginDTO.getUserInfo())
+	        .claim("user", userToken)
 	        .build();
 
 	    JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();

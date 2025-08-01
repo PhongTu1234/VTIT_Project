@@ -23,6 +23,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -121,8 +122,8 @@ public class Users implements Serializable {
     @JsonIgnore
     private List<Comment> comments;
     
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIgnore
-    @JoinTable(name = "User_Role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private List<Roles> user_Role;
+    @JoinColumn(name = "role_id")
+    private Roles role;
 }

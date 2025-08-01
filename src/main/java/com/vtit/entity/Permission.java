@@ -82,6 +82,11 @@ public class Permission implements Serializable {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JsonIgnore
-    @JoinTable(name = "Role_Permission", joinColumns = @JoinColumn(name = "role_id"), inverseJoinColumns = @JoinColumn(name = "permission_id"))
+    @JoinTable(
+        name = "Role_Permission", 
+        joinColumns = @JoinColumn(name = "permission_id"), 
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private List<Roles> role_Permission;
+
 }

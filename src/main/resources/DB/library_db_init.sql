@@ -20,8 +20,14 @@ CREATE TABLE Users (
     updated_date DATETIME,
     updated_by NVARCHAR(50),
     is_active BIT DEFAULT 1,
-    is_deleted BIT DEFAULT 0
+    is_deleted BIT DEFAULT 0,
+	role_id INT FOREIGN KEY REFERENCES Roles(id)
 );
+ALTER TABLE Users ADD role_id INT;
+ALTER TABLE Users
+ADD CONSTRAINT fk_role_user
+FOREIGN KEY (role_id)
+REFERENCES Roles(id);
 
 -- ROLES
 CREATE TABLE Roles (
@@ -37,11 +43,11 @@ CREATE TABLE Roles (
 );
 
 -- USER_ROLE
-CREATE TABLE User_Role (
+--CREATE TABLE User_Role (
 	--id INT IDENTITY(1,1) PRIMARY KEY,
-    user_id INT FOREIGN KEY REFERENCES Users(id),
-    role_id INT FOREIGN KEY REFERENCES Roles(id)
-);
+--    user_id INT FOREIGN KEY REFERENCES Users(id),
+  --  role_id INT FOREIGN KEY REFERENCES Roles(id)
+--);
 
 -- PERMISSIONS (CHỨC NĂNG)
 CREATE TABLE Permissions (

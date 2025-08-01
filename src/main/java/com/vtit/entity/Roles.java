@@ -18,6 +18,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -76,12 +77,13 @@ public class Roles implements Serializable {
         this.updatedDate = Instant.now();
     }
     
-    @OneToMany(mappedBy = "user_Role", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Users> user;
     
-    @OneToMany(mappedBy = "role_Permission", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "role_Permission", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Permission> permission;
+
 }
 
