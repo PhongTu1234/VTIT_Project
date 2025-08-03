@@ -1,7 +1,10 @@
 package com.vtit.service;
 
+import java.net.URISyntaxException;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.dto.request.User.ReqCreateUserDTO;
@@ -17,9 +20,9 @@ public interface UserService {
     
     ResUserDTO findById(String id);
     
-    ResCreateUserDTO create(ReqCreateUserDTO reqCreateUserDTO); // Trả DTO đã tạo
+    ResCreateUserDTO create(ReqCreateUserDTO reqCreateUserDTO, MultipartFile avatar)  throws URISyntaxException, Exception; // Trả DTO đã tạo
 
-    ResUpdateUserDTO update(ReqUpdateUserDTO user); // Sửa lại dùng request DTO
+    ResUpdateUserDTO update(ReqUpdateUserDTO user, MultipartFile avatar)  throws URISyntaxException, Exception; // Sửa lại dùng request DTO
     
     void delete(String id);
     

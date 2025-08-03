@@ -77,6 +77,8 @@ public class Users implements Serializable {
     @JsonSerialize(using = CustomInstantSerializer.class)
     @JsonDeserialize(using = CustomInstantDeserializer.class)
     private Instant birthday;
+    
+    private String avatar;
 
     @Column(name = "created_date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")

@@ -37,6 +37,8 @@ public class ReqCreateUserDTO {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
     private Instant birthday;
+    
+    private String avatar;
 
     private ReqRoleIdDTO role;
 }

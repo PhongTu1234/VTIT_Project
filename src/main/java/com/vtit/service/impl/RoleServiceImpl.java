@@ -150,7 +150,7 @@ public class RoleServiceImpl implements RoleService {
         ResRoleDTO dto = new ResRoleDTO();
         dto.setId(role.getId());
         dto.setName(role.getName());
-        dto.setDescription(role.getDescription());
+        dto.setDescription(role.getDescriptions());
         dto.setCreatedBy(role.getCreatedBy());
         dto.setCreatedDate(role.getCreatedDate());
         dto.setUpdatedBy(role.getUpdatedBy());
@@ -167,7 +167,7 @@ public class RoleServiceImpl implements RoleService {
         ResCreateRoleDTO dto = new ResCreateRoleDTO();
         dto.setId(role.getId());
         dto.setName(role.getName());
-        dto.setDescription(role.getDescription());
+        dto.setDescription(role.getDescriptions());
         dto.setCreatedBy(role.getCreatedBy());
         dto.setCreatedDate(role.getCreatedDate());
 
@@ -182,7 +182,7 @@ public class RoleServiceImpl implements RoleService {
         ResUpdateRoleDTO dto = new ResUpdateRoleDTO();
         dto.setId(role.getId());
         dto.setName(role.getName());
-        dto.setDescription(role.getDescription());
+        dto.setDescription(role.getDescriptions());
         dto.setUpdatedBy(role.getUpdatedBy());
         dto.setUpdatedDate(role.getUpdatedDate());
 
@@ -196,7 +196,7 @@ public class RoleServiceImpl implements RoleService {
 
         Roles role = new Roles();
         role.setName(dto.getName());
-        role.setDescription(dto.getDescription());
+        role.setDescriptions(dto.getDescription());
 
         return role;
     }
@@ -208,7 +208,7 @@ public class RoleServiceImpl implements RoleService {
 
         existingRole.setName(dto.getName());
         if (dto.getDescription() != null)
-			existingRole.setDescription(dto.getDescription());
+			existingRole.setDescriptions(dto.getDescription());
 
         return existingRole;
     }

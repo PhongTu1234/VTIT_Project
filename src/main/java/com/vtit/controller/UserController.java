@@ -1,5 +1,7 @@
 package com.vtit.controller;
 
+import java.net.URISyntaxException;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.turkraft.springfilter.boot.Filter;
 import com.vtit.dto.common.ResultPaginationDTO;
@@ -49,14 +53,16 @@ public class UserController {
 
     @PostMapping
     @ApiMessage("Create a New User")
-    public ResponseEntity<ResCreateUserDTO> create(@Valid @RequestBody ReqCreateUserDTO dto) {
-        return ResponseEntity.ok(userService.create(dto));
+    public ResponseEntity<ResCreateUserDTO> create(@Valid @RequestBody ReqCreateUserDTO dto,
+    		@RequestPart("avatar") MultipartFile avatar) throws URISyntaxException, Exception {
+        return ResponseEntity.ok(userService.create(dto, avatar));
     }
 
     @PutMapping
     @ApiMessage("Update a User")
-    public ResponseEntity<ResUpdateUserDTO> update(@Valid @RequestBody ReqUpdateUserDTO dto) {
-        return ResponseEntity.ok(userService.update(dto));
+    public ResponseEntity<ResUpdateUserDTO> update(@Valid @RequestBody ReqUpdateUserDTO dto,
+    		@RequestPart("avatar") MultipartFile avatar) throws URISyntaxException, Exception {
+        return ResponseEntity.ok(userService.update(dto,avatar));
     }
 
     @DeleteMapping("/{id}")

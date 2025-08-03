@@ -39,7 +39,7 @@ public class Roles implements Serializable {
     @Column(length = 100)
     private String name;
     
-    private String description;
+    private String descriptions;
 
     @Column(name = "created_date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")

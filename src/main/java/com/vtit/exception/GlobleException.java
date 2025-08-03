@@ -138,4 +138,14 @@ public class GlobleException {
 //        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 //
 //    }
+    
+    @ExceptionHandler(StorageException.class)
+	public ResponseEntity<RestResponseDTO<Object>> handleFileUploadException(Exception ex) {
+	    RestResponseDTO<Object> res = new RestResponseDTO<>();
+	    res.setStatusCode(HttpStatus.BAD_REQUEST.value());
+	    res.setError(ex.getMessage());
+	    res.setMessage("Exception Upload file...");
+	    res.setData(null);
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+	}
 }

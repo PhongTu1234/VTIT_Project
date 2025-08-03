@@ -24,6 +24,7 @@ public class ReqUpdateUserDTO {
     @Pattern(regexp = "^[0-9+()\\-\\s]*$", message = "Số điện thoại không hợp lệ")
     private String phone;
     private String address;
+    private String avatar;
     private Instant birthday;
     
 }

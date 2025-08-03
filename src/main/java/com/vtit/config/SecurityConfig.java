@@ -49,7 +49,7 @@ public class SecurityConfig {
 			.cors(Customizer.withDefaults())
 			.authorizeHttpRequests(
 
-					auth -> auth.requestMatchers("/", "/api/v1/auth/login", "/api/v1/users", "/api/v1/auth/refresh-token").permitAll().anyRequest().authenticated())
+					auth -> auth.requestMatchers("/", "/api/v1/auth/login", "/api/v1/users", "/api/v1/auth/refresh-token","/storage/**").permitAll().anyRequest().authenticated())
 			.oauth2ResourceServer((oauth2) -> oauth2.
 					jwt(Customizer.withDefaults())
 					.authenticationEntryPoint(customAuthenticationEntryPoint))

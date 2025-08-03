@@ -9,5 +9,4 @@ public class ResPermissionSummaryDTO {
 	private String name;
 	private String method;
 	private String module;
-	
 }
