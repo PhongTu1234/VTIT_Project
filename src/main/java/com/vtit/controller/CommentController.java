@@ -1,5 +1,7 @@
 package com.vtit.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,7 @@ import com.vtit.dto.response.borrowing.ResBorrowingDTO;
 import com.vtit.dto.response.borrowing.ResCreateBorrowingDTO;
 import com.vtit.dto.response.borrowing.ResUpdateBorrowingDTO;
 import com.vtit.dto.response.comment.ResCommentDTO;
+import com.vtit.dto.response.comment.ResCommentTreeDTO;
 import com.vtit.dto.response.comment.ResCreateCommentDTO;
 import com.vtit.dto.response.comment.ResUpdateCommentDTO;
 import com.vtit.entity.Borrowing;
@@ -57,4 +60,11 @@ public class CommentController {
     	commentService.delete(id);
         return ResponseEntity.noContent().build();
     }
+    
+    @GetMapping("/tree/{postId}")
+    public ResponseEntity<List<ResCommentTreeDTO>> getCommentTree(@RequestParam Integer postId) {
+        return ResponseEntity.ok(commentService.getCommentTree(postId));
+    }
+
+
 }

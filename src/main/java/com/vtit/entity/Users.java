@@ -125,7 +125,6 @@ public class Users implements Serializable {
     private List<Comment> comments;
     
     @ManyToOne
-    @JsonIgnore
     @JoinColumn(name = "role_id")
     private Roles role;
 }

@@ -11,6 +11,8 @@ public class ResUpdatePermissionDTO {
 	private Integer id;
     private String code;
     private String name;
+    private String method;
+    private String module;
     private String updatedBy;
     private Instant updatedDate;
 }

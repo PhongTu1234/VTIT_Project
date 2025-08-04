@@ -23,6 +23,7 @@ import com.vtit.entity.Roles;
 import com.vtit.exception.DuplicateResourceException;
 import com.vtit.exception.IdInvalidException;
 import com.vtit.exception.ResourceNotFoundException;
+import com.vtit.mapper.RoleMapper;
 import com.vtit.reponsitory.PermissionRepository;
 import com.vtit.reponsitory.RoleRepository;
 import com.vtit.service.RoleService;
@@ -33,10 +34,12 @@ public class RoleServiceImpl implements RoleService {
 
 	private final RoleRepository roleRepository;
 	private final PermissionRepository permissionRepository;
+	private final RoleMapper roleMapper;
 
-	public RoleServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository) {
+	public RoleServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository, RoleMapper roleMapper) {
 		this.roleRepository = roleRepository;
 		this.permissionRepository = permissionRepository;
+		this.roleMapper = roleMapper;
 	}
 
 	@Override
@@ -60,78 +63,60 @@ public class RoleServiceImpl implements RoleService {
 		Integer idInt = IdValidator.validateAndParse(id);
 		Roles role = roleRepository.findById(idInt)
 				.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy quyền với id = " + idInt));
-		return convertToResRoleDTO(role);
+		return roleMapper.toResRoleDTO(role);
 	}
 
 	@Override
 	public ResCreateRoleDTO create(ReqCreateRoleDTO dto) {
-//		if (roleRepository.existsByName(role.getName())) {
-//			throw new DuplicateResourceException("Name '" + role.getName() + "' đã tồn tại");
-//		}
-//		return convertToResCreateRoleDTO(roleRepository.save(convertToEntity(role)));
-		List<ReqPermissionIdDTO> permissionDTOs = dto.getPermissions();
+		List<Integer> permissionIds = dto.getPermissions().stream()
+			.map(p -> p.getId())
+			.toList();
 
-		List<Integer> permissionIds = permissionDTOs.stream()
-		    .map(ReqPermissionIdDTO::getId)
-		    .collect(Collectors.toList());
-		
 		List<Permission> permissions = permissionRepository.findAllById(permissionIds);
 
-	    if (permissions.size() != permissionIds.size()) {
-	        List<Integer> foundIds = permissions.stream()
-	                                           .map(Permission::getId)
-	                                           .toList();
-	        List<Integer> missingIds = permissionIds.stream()
-	                                      .filter(id -> !foundIds.contains(id))
-	                                      .toList();
-	        throw new ResourceNotFoundException("Permission not found with ID(s): " + missingIds);
-	    }
+		if (permissions.size() != permissionIds.size()) {
+			List<Integer> foundIds = permissions.stream().map(Permission::getId).toList();
+			List<Integer> missingIds = permissionIds.stream().filter(id -> !foundIds.contains(id)).toList();
+			throw new ResourceNotFoundException("Permission not found with ID(s): " + missingIds);
+		}
 
-	    Roles newRole = convertToEntity(dto);
-	    newRole.setPermission(permissions);
-		if (!roleRepository.existsByName(dto.getName())) {
+		if (roleRepository.existsByName(dto.getName())) {
 			throw new DuplicateResourceException("Role đã tồn tại");
 		}
 
+		Roles newRole = roleMapper.fromCreateDTO(dto);
+		newRole.setPermission(permissions);
 		Roles savedRole = roleRepository.save(newRole);
 
-	    return convertToResCreateRoleDTO(savedRole);
+		return roleMapper.toResCreateRoleDTO(savedRole);
 	}
 
 	@Override
-	public ResUpdateRoleDTO update(ReqUpdateRoleDTO updatedRole) {
-		// Kiểm tra Role tồn tại
-		Roles existingRole = roleRepository.findById(updatedRole.getId()).orElseThrow(
-				() -> new ResourceNotFoundException("Không tìm thấy quyền với id = " + updatedRole.getId()));
+	public ResUpdateRoleDTO update(ReqUpdateRoleDTO dto) {
+		Roles existingRole = roleRepository.findById(dto.getId()).orElseThrow(
+			() -> new ResourceNotFoundException("Không tìm thấy quyền với id = " + dto.getId()));
 
-		if (updatedRole.getName() != null
-				&& roleRepository.existsByNameAndIdNot(updatedRole.getName(), updatedRole.getId())) {
-			throw new DuplicateResourceException("Name '" + updatedRole.getName() + "' đã tồn tại");
+		if (dto.getName() != null && roleRepository.existsByNameAndIdNot(dto.getName(), dto.getId())) {
+			throw new DuplicateResourceException("Name '" + dto.getName() + "' đã tồn tại");
 		}
-		
-	    // Kiểm tra danh mục (Permission) có tồn tại không
-		List<ReqPermissionIdDTO> permissionDTOs = updatedRole.getPermissions();
 
-		List<Integer> permissionIds = permissionDTOs.stream()
-		    .map(ReqPermissionIdDTO::getId)
-		    .collect(Collectors.toList());
-		
+		List<Integer> permissionIds = dto.getPermissions().stream()
+			.map(p -> p.getId())
+			.toList();
+
 		List<Permission> permissions = permissionRepository.findAllById(permissionIds);
 
-	    if (permissions.size() != permissionIds.size()) {
-	        List<Integer> foundIds = permissions.stream()
-	                                           .map(Permission::getId)
-	                                           .toList();
-	        List<Integer> missingIds = permissionIds.stream()
-	                                      .filter(id -> !foundIds.contains(id))
-	                                      .toList();
-	        throw new ResourceNotFoundException("Permission not found with ID(s): " + missingIds);
-	    }
-	    
-	    // Cập nhật thông tin
-	    Roles updateRole = convertToEntity(updatedRole, existingRole);
-	    Roles savedBook = roleRepository.save(updateRole);
-	    return convertToResUpdateRoleDTO(savedBook);
+		if (permissions.size() != permissionIds.size()) {
+			List<Integer> foundIds = permissions.stream().map(Permission::getId).toList();
+			List<Integer> missingIds = permissionIds.stream().filter(id -> !foundIds.contains(id)).toList();
+			throw new ResourceNotFoundException("Permission not found with ID(s): " + missingIds);
+		}
+
+		existingRole = roleMapper.fromUpdateDTO(dto, existingRole);
+		existingRole.setPermission(permissions);
+
+		Roles savedRole = roleRepository.save(existingRole);
+		return roleMapper.toResUpdateRoleDTO(savedRole);
 	}
 
 	@Override
@@ -141,75 +126,4 @@ public class RoleServiceImpl implements RoleService {
 				.orElseThrow(() -> new IdInvalidException("Không tìm thấy quyền với id = " + intId));
 		roleRepository.delete(role);
 	}
-	
-	public ResRoleDTO convertToResRoleDTO(Roles role) {
-        if (role == null) {
-            return null;
-        }
-
-        ResRoleDTO dto = new ResRoleDTO();
-        dto.setId(role.getId());
-        dto.setName(role.getName());
-        dto.setDescription(role.getDescriptions());
-        dto.setCreatedBy(role.getCreatedBy());
-        dto.setCreatedDate(role.getCreatedDate());
-        dto.setUpdatedBy(role.getUpdatedBy());
-        dto.setUpdatedDate(role.getUpdatedDate());
-
-        return dto;
-    }
-	
-	public ResCreateRoleDTO convertToResCreateRoleDTO(Roles role) {
-        if (role == null) {
-            return null;
-        }
-
-        ResCreateRoleDTO dto = new ResCreateRoleDTO();
-        dto.setId(role.getId());
-        dto.setName(role.getName());
-        dto.setDescription(role.getDescriptions());
-        dto.setCreatedBy(role.getCreatedBy());
-        dto.setCreatedDate(role.getCreatedDate());
-
-        return dto;
-    }
-	
-	public ResUpdateRoleDTO convertToResUpdateRoleDTO(Roles role) {
-        if (role == null) {
-            return null;
-        }
-
-        ResUpdateRoleDTO dto = new ResUpdateRoleDTO();
-        dto.setId(role.getId());
-        dto.setName(role.getName());
-        dto.setDescription(role.getDescriptions());
-        dto.setUpdatedBy(role.getUpdatedBy());
-        dto.setUpdatedDate(role.getUpdatedDate());
-
-        return dto;
-    }
-	
-	public Roles convertToEntity(ReqCreateRoleDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-
-        Roles role = new Roles();
-        role.setName(dto.getName());
-        role.setDescriptions(dto.getDescription());
-
-        return role;
-    }
-	
-	public Roles convertToEntity(ReqUpdateRoleDTO dto, Roles existingRole) {
-        if (dto == null || existingRole == null) {
-            return null;
-        }
-
-        existingRole.setName(dto.getName());
-        if (dto.getDescription() != null)
-			existingRole.setDescriptions(dto.getDescription());
-
-        return existingRole;
-    }
 }

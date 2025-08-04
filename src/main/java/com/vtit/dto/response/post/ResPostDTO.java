@@ -1,8 +1,10 @@
 package com.vtit.dto.response.post;
 
 import java.time.Instant;
+import java.util.List;
 
 import com.vtit.dto.response.User.ResUserSummartDTO;
+import com.vtit.dto.response.comment.ResCommentTreeDTO;
 import com.vtit.dto.response.postReaction.ReactionSummaryDTO;
 
 import lombok.Getter;
@@ -20,4 +22,5 @@ public class ResPostDTO {
     private String updatedBy;
     private Instant updatedDate;
     private ReactionSummaryDTO likeOrDislike;
+    private List<ResCommentTreeDTO> comments;
 }

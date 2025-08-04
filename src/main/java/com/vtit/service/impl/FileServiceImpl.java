@@ -1,93 +1,97 @@
 package com.vtit.service.impl;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-
+import com.vtit.service.FileService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.vtit.service.FileService;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.*;
+import java.util.UUID;
+import java.util.logging.Logger;
 
 @Service
 public class FileServiceImpl implements FileService {
-	
-	@Value("${upload-file.base-uri}")
-	private String baseUri;
 
-	@Override
-	public void createDirectory(String folder) throws URISyntaxException {
-		URI uri = new URI(folder);
-		Path path = Paths.get(uri);
-		File tmpDir = new File(path.toString());
-		if (!tmpDir.isDirectory()) {
-			try {
-				Files.createDirectory(tmpDir.toPath());
-				System.out.println(">>> CREATE NEW DIRECTORY SUCCESSFULL, PATH = " + tmpDir.toPath());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} else {
-			System.out.println(">>> SKIPMAKING DIRECTORY, ALREADY EXISRTS");
-		}
-		
-	}
+    private static final Logger logger = Logger.getLogger(FileServiceImpl.class.getName());
 
-	@Override
-	public String store(MultipartFile file, String folder) throws URISyntaxException, IOException {
-		String finalName = System.currentTimeMillis() + "-" + file.getOriginalFilename();
-		
-		URI uri = new URI(baseUri + folder + "/" + finalName);
-		Path path = Paths.get(uri);
-		try (InputStream inputStream = file.getInputStream()) {
-			Files.copy(inputStream, path,
-					StandardCopyOption.REPLACE_EXISTING);
-		}
-		return finalName;
-		
-	}
+    @Value("${upload-file.base-uri}")
+    private String baseUri;
 
-	@Override
-	public long getFileLength(String fileName, String folder) throws URISyntaxException {
-		URI uri = new URI(baseUri + folder + "/" + fileName);
-		Path path = Paths.get(uri);
-		
-		File tmpDir = new File(path.toString());
-		
-		if (!tmpDir.exists() || tmpDir.isDirectory()) {
-			return 0;
-		}
-		return tmpDir.length();
-	}
+    private Path resolveFolderPath(String folder) throws URISyntaxException {
+        return Paths.get(new URI(baseUri)).resolve(folder).normalize();
+    }
 
-	@Override
-	public InputStreamResource getResource(String fileName, String folder)
-			throws URISyntaxException, FileNotFoundException {
-		URI uri = new URI(baseUri + folder + "/" + fileName);
-		Path path = Paths.get(uri);
-		File file = new File(path.toString());
-		return new InputStreamResource(new FileInputStream(file));
-	}
-	
-	@Override
-	public void deleteFile(String folder, String fileName) throws URISyntaxException {
-	    URI uri = new URI(baseUri + folder + "/" + fileName);
-	    Path path = Paths.get(uri);
-	    File file = new File(path.toString());
-	    if (file.exists() && file.isFile()) {
-	        file.delete();
-	    }
-	}
+    private Path resolveFilePath(String folder, String fileName) throws URISyntaxException {
+        return resolveFolderPath(folder).resolve(fileName).normalize();
+    }
 
+    @Override
+    public void createDirectory(String folder) throws URISyntaxException {
+        Path path = resolveFolderPath(folder);
+        if (Files.notExists(path)) {
+            try {
+                Files.createDirectories(path);
+                logger.info(">>> Directory created: " + path.toAbsolutePath());
+            } catch (IOException e) {
+                logger.severe(">>> Failed to create directory: " + e.getMessage());
+                throw new RuntimeException("Failed to create directory: " + folder, e);
+            }
+        } else {
+            logger.info(">>> Directory already exists: " + path.toAbsolutePath());
+        }
+    }
 
+    @Override
+    public String store(MultipartFile file, String folder, String fileName) throws URISyntaxException, IOException {
+        Path destination = resolveFilePath(folder, fileName);
+        createDirectory(folder); // ensure folder exists
+        Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+        return fileName;
+    }
+
+    @Override
+    public long getFileLength(String fileName, String folder) throws URISyntaxException {
+        Path path = resolveFilePath(folder, fileName);
+        File file = path.toFile();
+        return (file.exists() && file.isFile()) ? file.length() : 0;
+    }
+
+    @Override
+    public InputStreamResource getResource(String fileName, String folder)
+            throws URISyntaxException, FileNotFoundException {
+        Path path = resolveFilePath(folder, fileName);
+        File file = path.toFile();
+        if (!file.exists()) {
+            throw new FileNotFoundException("File not found: " + path);
+        }
+        return new InputStreamResource(new FileInputStream(file));
+    }
+
+    @Override
+    public void deleteFile(String folder, String fileName) throws URISyntaxException {
+        Path path = resolveFilePath(folder, fileName);
+        try {
+            Files.deleteIfExists(path);
+            logger.info(">>> File deleted: " + path);
+        } catch (IOException e) {
+            logger.severe(">>> Failed to delete file: " + path);
+            throw new RuntimeException("Cannot delete file: " + path, e);
+        }
+    }
+
+    @Override
+    public String generateFileName(MultipartFile file) {
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        return UUID.randomUUID().toString() + extension;
+    }
 }

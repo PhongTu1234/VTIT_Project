@@ -8,5 +8,6 @@ import lombok.Setter;
 public class ReqCreateCommentDTO {
     private String content;
     private Integer postId;
+    private Integer parentId;
    
 }

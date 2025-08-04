@@ -17,5 +17,7 @@ public class ResCreateCommentDTO {
     private Instant createdDate;
     
     private ResPostSummaryDTO Post;
+    private Integer parentId;
+
 //    private ResUserSummartDTO User;
 }

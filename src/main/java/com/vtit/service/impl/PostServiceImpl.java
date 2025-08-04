@@ -22,8 +22,10 @@ import com.vtit.dto.response.post.ResUpdatePostDTO;
 import com.vtit.dto.response.postReaction.ReactionSummaryDTO;
 import com.vtit.entity.Post;
 import com.vtit.exception.ResourceNotFoundException;
+import com.vtit.mapper.PostMapper;
 import com.vtit.reponsitory.PostRepository;
 import com.vtit.reponsitory.UserRepository;
+import com.vtit.service.CommentService;
 import com.vtit.service.PostReactionService;
 import com.vtit.service.PostService;
 import com.vtit.utils.IdValidator;
@@ -35,12 +37,21 @@ public class PostServiceImpl implements PostService{
 	private final UserRepository userRepository;
 	private final SecurityUtil securityUtil;
 	private final PostReactionService postReactionService;
+	private final CommentService commentService;
+	private final PostMapper postMapper;
 	
-	public PostServiceImpl(PostRepository postRepository, UserRepository userRepository, SecurityUtil securityUtil, PostReactionService postReactionService) {
+	public PostServiceImpl(PostRepository postRepository,
+			UserRepository userRepository,
+			SecurityUtil securityUtil,
+			PostReactionService postReactionService,
+			CommentService commentService,
+			PostMapper postMapper) {
 		this.postRepository = postRepository;
 		this.userRepository = userRepository;
 		this.securityUtil = securityUtil;
 		this.postReactionService = postReactionService;
+		this.commentService = commentService;
+		this.postMapper = postMapper;
 	}
 	
 	@Override
@@ -49,7 +60,7 @@ public class PostServiceImpl implements PostService{
 		ResultPaginationDTO rs = new ResultPaginationDTO();
 		ResultPaginationDTO.Meta mt = new ResultPaginationDTO.Meta();
 		List<ResPostDTO> postDTOs = pagePosts.getContent().stream()
-				.map(this::convertToResPostDTO)
+				.map(postMapper::convertToResPostDTO)
 				.collect(Collectors.toList());
 		
 		mt.setPage(pageable.getPageNumber() + 1);
@@ -67,19 +78,19 @@ public class PostServiceImpl implements PostService{
     	Integer postId = IdValidator.validateAndParse(id);
     	Post post = postRepository.findById(postId)
         		.orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + postId));
-        return convertToResPostDTO(post);
+        return postMapper.convertToResPostDTO(post);
     }
 
     @Override
     public ResCreatePostDTO create(ReqCreatePostDTO request) {
-        return convertToResCreatePostDTO(postRepository.save(convertToEntity(request)));
+        return postMapper.convertToResCreatePostDTO(postRepository.save(convertToEntity(request)));
     }
 
     @Override
     public ResUpdatePostDTO update(ReqUpdatePostDTO post) {
         Post postDB = postRepository.findById(post.getId())
         		.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy Post với id = " + post.getId()));
-        return convertToResUpdatePostDTO(postRepository.save(convertToEntity(post, postDB)));
+        return postMapper.convertToResUpdatePostDTO(postRepository.save(convertToEntity(post, postDB)));
     }
 
     @Override
@@ -113,53 +124,5 @@ public class PostServiceImpl implements PostService{
     public List<ResTopPostDTO> getTop5LikedPosts() {
         return postRepository.findTopLikedPosts(PageRequest.of(0, 5));
     }
-
-    public ResPostDTO convertToResPostDTO(Post post) {
-        if (post == null) return null;
-
-        ResPostDTO dto = new ResPostDTO();
-        dto.setId(post.getId());
-        dto.setTitle(post.getTitle());
-        dto.setContent(post.getContent());
-        dto.setCreatedBy(post.getCreatedBy());
-        dto.setCreatedDate(post.getCreatedDate());
-        dto.setUpdatedBy(post.getUpdatedBy());
-        dto.setUpdatedDate(post.getUpdatedDate());
-
-        if (post.getUser() != null) {
-            ResUserSummartDTO userDTO = new ResUserSummartDTO();
-            userDTO.setFullname(post.getUser().getFullname());
-            dto.setUser(userDTO);
-        }
-        
-        String sID = post.getId().toString();
-        ReactionSummaryDTO reactionSummaryDTO = postReactionService.getReactionSummary(sID);
-        dto.setLikeOrDislike(reactionSummaryDTO);
-
-        return dto;
-    }
-    
-    public ResCreatePostDTO convertToResCreatePostDTO(Post post) {
-        ResCreatePostDTO dto = new ResCreatePostDTO();
-        dto.setId(post.getId());
-        dto.setTitle(post.getTitle());
-        dto.setContent(post.getContent());
-        dto.setUser(post.getUser() != null ? post.getUser().getId() : null);
-        dto.setCreatedBy(post.getCreatedBy());
-        dto.setCreatedDate(post.getCreatedDate());
-        return dto;
-    }
-    
-    public ResUpdatePostDTO convertToResUpdatePostDTO(Post post) {
-        ResUpdatePostDTO dto = new ResUpdatePostDTO();
-        dto.setId(post.getId());
-        dto.setTitle(post.getTitle());
-        dto.setContent(post.getContent());
-        dto.setUser(post.getUser() != null ? post.getUser().getId() : null);
-        dto.setUpdatedBy(post.getUpdatedBy());
-        dto.setUpdatedDate(post.getUpdatedDate());
-        return dto;
-    }
-
 
 }

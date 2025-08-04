@@ -58,7 +58,7 @@ public class FileController {
 		fileService.createDirectory(baseUri + folder);
 
 		// store file
-		String uploadFileName = fileService.store(file, folder);
+		String uploadFileName = fileService.store(file,"avatars", folder);
 
 		ResUploadFileDTO res = new ResUploadFileDTO();
 		res.setFileName(uploadFileName);
