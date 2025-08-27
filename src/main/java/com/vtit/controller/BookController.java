@@ -14,8 +14,10 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,30 +58,35 @@ public class BookController {
 	}
 	
 	@GetMapping
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
 	@ApiMessage("Fresh all Books")
 	public ResponseEntity<ResultPaginationDTO> getAll(@Filter Specification<Book> spec, Pageable pageable){
 		return ResponseEntity.ok(bookService.findAll(spec, pageable));
 	}
 	
 	@GetMapping("/{id}")
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
 	@ApiMessage("Fresh a Book by ID")
     public ResponseEntity<ResBookDTO> getById(@PathVariable String id) {
         return ResponseEntity.ok(bookService.findById(id));
     }
 	
 	@PostMapping
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
 	@ApiMessage("Create a new Book")
     public ResponseEntity<ResCreateBookDTO> create(@Valid @RequestBody ReqCreateBookDTO book) {
         return ResponseEntity.status(HttpStatus.CREATED.value()).body(bookService.create(book));
     }
 	
-	@PutMapping()
+	@PutMapping
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
 	@ApiMessage("Update a Book")
     public ResponseEntity<ResUpdateBookDTO> update(@Valid @RequestBody ReqUpdateBookDTO book) {
         return ResponseEntity.ok(bookService.update(book));
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
     @ApiMessage("Delete a Book by ID")
     public void delete(@PathVariable String id) {
     	bookService.delete(id);

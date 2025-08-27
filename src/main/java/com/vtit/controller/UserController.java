@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,18 +41,21 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
     @ApiMessage("Fetch All Users")
     public ResponseEntity<ResultPaginationDTO> getAll(@Filter Specification<Users> spec, Pageable pageable) {
         return ResponseEntity.ok(userService.findAll(spec, pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
     @ApiMessage("Fetch User by ID")
     public ResponseEntity<ResUserDTO> getById(@PathVariable String id) {
         return ResponseEntity.ok(userService.findById(id));
     }
 
     @PostMapping
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
     @ApiMessage("Create a New User")
     public ResponseEntity<ResCreateUserDTO> create(@Valid @RequestBody ReqCreateUserDTO dto,
     		@RequestPart("avatar") MultipartFile avatar) throws URISyntaxException, Exception {
@@ -59,6 +63,7 @@ public class UserController {
     }
 
     @PutMapping
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
     @ApiMessage("Update a User")
     public ResponseEntity<ResUpdateUserDTO> update(@Valid @RequestBody ReqUpdateUserDTO dto,
     		@RequestPart("avatar") MultipartFile avatar) throws URISyntaxException, Exception {
@@ -66,6 +71,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
     @ApiMessage("Delete a User")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         userService.delete(id);

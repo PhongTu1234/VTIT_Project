@@ -130,23 +130,31 @@ public class AuthController {
         roleDTO.setId(user.getRole().getId());
         roleDTO.setName(user.getRole().getName());
 
-        List<ResPermissionSummaryDTO> permissionList = user.getRole().getPermission().stream()
+        // Build permission list
+        List<ResPermissionSummaryDTO> permissionList = user.getRole().getPermissions().stream()
                 .map(permission -> {
                     ResPermissionSummaryDTO dto = new ResPermissionSummaryDTO();
                     dto.setName(permission.getName());
                     dto.setMethod(permission.getMethod());
                     dto.setModule(permission.getModule());
+                    dto.setCode(permission.getCode());
                     return dto;
                 }).toList();
-
         roleDTO.setPermissions(permissionList);
         userInfo.setRole(roleDTO);
 
-        // Create token
+        // Extract permission codes (đây là danh sách quyền thực tế)
+        List<String> permissionCodes = user.getRole().getPermissions().stream()
+                .map(p -> p.getCode()) // 👈 phải có field code trong Permission entity
+                .toList();
+
+        // Build response
         ResLoginDTO response = new ResLoginDTO();
         response.setUserInfo(userInfo);
-        String accessToken = securityUtil.createAccessToken(email, response);
-        String refreshToken = securityUtil.createRefreshToken(username, response);
+
+        // Create tokens
+        String accessToken = securityUtil.createAccessToken(email, response, permissionCodes);
+        String refreshToken = securityUtil.createRefreshToken(username, response, permissionCodes);
 
         // Save refresh token
         userService.updateUserToken(username, refreshToken);

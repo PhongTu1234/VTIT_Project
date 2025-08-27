@@ -6,11 +6,13 @@ import com.vtit.dto.request.User.ReqUpdateUserDTO;
 import com.vtit.dto.response.User.ResCreateUserDTO;
 import com.vtit.dto.response.User.ResUpdateUserDTO;
 import com.vtit.dto.response.User.ResUserDTO;
+import com.vtit.entity.Roles;
 import com.vtit.entity.Users;
 import com.vtit.exception.DuplicateResourceException;
 import com.vtit.exception.IdInvalidException;
 import com.vtit.exception.ResourceNotFoundException;
 import com.vtit.mapper.UserMapper;
+import com.vtit.reponsitory.RoleRepository;
 import com.vtit.reponsitory.UserRepository;
 import com.vtit.service.FileService;
 import com.vtit.service.UserService;
@@ -20,8 +22,10 @@ import com.vtit.utils.SecurityUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +35,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+//@Transactional
 public class UserServiceImpl implements UserService {
 
 	private final UserRepository userRepository;
@@ -38,17 +43,20 @@ public class UserServiceImpl implements UserService {
 	private final SecurityUtil securityUtil;
 	private final FileService fileService;
 	private final UserMapper userMapper;
+	private final RoleRepository roleRepository;
 
 	public UserServiceImpl(UserRepository userRepository,
 	                       PasswordEncoder passwordEncoder,
 	                       SecurityUtil securityUtil,
 	                       FileService fileService,
-	                       UserMapper userMapper) {
+	                       UserMapper userMapper,
+	                       RoleRepository roleRepository) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.securityUtil = securityUtil;
 		this.fileService = fileService;
 		this.userMapper = userMapper;
+		this.roleRepository = roleRepository;
 	}
 
 	@Override
@@ -215,4 +223,20 @@ public class UserServiceImpl implements UserService {
 			throw new DuplicateResourceException("Phone '" + phone + "' đã tồn tại");
 		}
 	}
+	
+	@Override
+	public Users handleGetUserByUsernamea(String login) {
+	    Users user = userRepository.findUserWithRolesAndPermissions(login)
+	            .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+
+	    	System.out.println("Permissions size = " + user.getRole().getPermissions().size());
+	    	user.getRole().getPermissions().forEach(p -> System.out.println(">> " + p.getCode()));
+
+	    
+	    // Chỉ cần đảm bảo permissions được load
+	    user.getRole().getPermissions().size();
+
+	    return user;
+	}
+
 }

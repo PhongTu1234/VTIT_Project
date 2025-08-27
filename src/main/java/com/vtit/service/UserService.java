@@ -33,5 +33,7 @@ public interface UserService {
     void updateUserToken(String email, String token);
 
     Users findByRefreshTokenAndEmail(String refreshToken, String email);
+    
+    Users handleGetUserByUsernamea(String username);
 
 }

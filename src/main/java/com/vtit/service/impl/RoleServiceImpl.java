@@ -2,6 +2,7 @@ package com.vtit.service.impl;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -85,7 +86,7 @@ public class RoleServiceImpl implements RoleService {
 		}
 
 		Roles newRole = roleMapper.fromCreateDTO(dto);
-		newRole.setPermission(permissions);
+		newRole.setPermissions((Set<Permission>) permissions);
 		Roles savedRole = roleRepository.save(newRole);
 
 		return roleMapper.toResCreateRoleDTO(savedRole);
@@ -113,7 +114,7 @@ public class RoleServiceImpl implements RoleService {
 		}
 
 		existingRole = roleMapper.fromUpdateDTO(dto, existingRole);
-		existingRole.setPermission(permissions);
+		existingRole.setPermissions((Set<Permission>) permissions);
 
 		Roles savedRole = roleRepository.save(existingRole);
 		return roleMapper.toResUpdateRoleDTO(savedRole);

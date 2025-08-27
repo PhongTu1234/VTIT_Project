@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,43 +43,58 @@ public class PostController {
 	}
 	
 	@GetMapping
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
+	@ApiMessage("Get list of posts")
     public ResponseEntity<ResultPaginationDTO> getAll(@Filter Specification<Post> spec, Pageable pageable) {
         return ResponseEntity.ok(postService.findAll(spec, pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
+    @ApiMessage("Get post by ID")
     public ResponseEntity<ResPostDTO> getById(@PathVariable String id) {
         return ResponseEntity.ok(postService.findById(id));
     }
 
     @PostMapping
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
+    @ApiMessage("Create a new post")
     public ResponseEntity<ResCreatePostDTO> create(@RequestBody ReqCreatePostDTO post) {
         return ResponseEntity.ok(postService.create(post));
     }
 
     @PutMapping
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
+    @ApiMessage("Update a post")
     public ResponseEntity<ResUpdatePostDTO> update(@RequestBody ReqUpdatePostDTO post) {
         return ResponseEntity.ok(postService.update(post));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
+    @ApiMessage("Delete a post by ID")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         postService.delete(id);
         return ResponseEntity.noContent().build();
     }
 	
 	@PostMapping("/{postId}/{reaction}")
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
+	@ApiMessage("React to a post")
     public ResponseEntity<ResPostReactionDTO> reactToPost(@PathVariable String postId,
                                          @PathVariable String reaction) {
         return ResponseEntity.ok(postReactionService.reactToPost(postId, reaction));
     }
 
     @GetMapping("/{postId}/reaction-summary")
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
+    @ApiMessage("Get reaction summary for a post")
     public ResponseEntity<ReactionSummaryDTO> getReactionSummary(@PathVariable String postId) {
         return ResponseEntity.ok(postReactionService.getReactionSummary(postId));
     }
     
     @GetMapping("/top-liked")
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
     @ApiMessage("Get top 5 liked posts")
     public ResponseEntity<List<ResTopPostDTO>> getTopLikedPosts() {
         List<ResTopPostDTO> topPosts = postService.getTop5LikedPosts();
