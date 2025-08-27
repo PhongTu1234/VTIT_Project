@@ -1,47 +1,75 @@
 package com.vtit.service.impl;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.vtit.dto.request.book.ReqCreateBookDTO;
 import com.vtit.dto.request.book.ReqUpdateBookDTO;
+import com.vtit.dto.common.RestResponseDTO;
 import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.dto.response.User.ResUserDTO;
 import com.vtit.dto.response.book.ResBookDTO;
 import com.vtit.dto.response.book.ResCreateBookDTO;
 import com.vtit.dto.response.book.ResUpdateBookDTO;
+import com.vtit.dto.response.category.ResCategoryBookStatisticDTO;
 import com.vtit.dto.response.category.ResCategoryDTO;
+import com.vtit.dto.response.post.ResTopPostDTO;
 import com.vtit.entity.Book;
 import com.vtit.entity.Category;
 import com.vtit.exception.DuplicateResourceException;
 import com.vtit.exception.IdInvalidException;
 import com.vtit.exception.ResourceNotFoundException;
+import com.vtit.mapper.BookMapper;
 import com.vtit.reponsitory.BookRepository;
 import com.vtit.reponsitory.CategoryRepository;
 import com.vtit.service.BookService;
 import com.vtit.utils.IdValidator;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class BookServiceImpl implements BookService {
 	private final BookRepository bookRepository;
 	private final RestTemplate restTemplate;
 	private final CategoryRepository categoryRepository;
+	private final BookMapper bookMapper;
+	private static final String TEMP_DIR = "temp";
+    private static final String EXPORT_FILE_NAME = "export-books.xlsx";
 
 	public BookServiceImpl(BookRepository bookRepository, RestTemplate restTemplate,
-			CategoryRepository categoryRepository) {
+			CategoryRepository categoryRepository, BookMapper bookMapper) {
 		this.bookRepository = bookRepository;
 		this.restTemplate = restTemplate;
 		this.categoryRepository = categoryRepository;
+		this.bookMapper = bookMapper;
 	}
 
 	@Override
@@ -167,7 +195,7 @@ public class BookServiceImpl implements BookService {
 		Page<Book> pageBooks = bookRepository.findAll(spec, pageable);
 		
 		List<ResBookDTO> bookDTOs = pageBooks.getContent().stream()
-				.map(this::convertToResBookDTO)
+				.map(bookMapper::convertToResBookDTO)
 				.collect(Collectors.toList());
 		
 		ResultPaginationDTO rs = new ResultPaginationDTO();
@@ -188,7 +216,7 @@ public class BookServiceImpl implements BookService {
 		Integer idInt = IdValidator.validateAndParse(id);
 		Book book = bookRepository.findById(idInt)
 				.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sách với id = " + idInt));
-		return convertToResBookDTO(book);
+		return bookMapper.convertToResBookDTO(book);
 	}
 
 	@Override
@@ -205,7 +233,7 @@ public class BookServiceImpl implements BookService {
 	        throw new ResourceNotFoundException("Category not found with ID(s): " + missingIds);
 	    }
 
-	    Book newBook = convertToEntity(dto);
+	    Book newBook = bookMapper.convertToEntity(dto);
 	    newBook.setCategory(categories);
 		if (bookRepository.existsByTitleAndAuthorAndPublisherAndPublishedDate(dto.getTitle(), dto.getAuthor(), dto.getPublisher(), dto.getPublishedDate())) {
 			throw new DuplicateResourceException("Sách '" + dto.getTitle() + 
@@ -216,7 +244,7 @@ public class BookServiceImpl implements BookService {
 
 	    Book savedBook = bookRepository.save(newBook);
 
-	    return convertToResCreateBookDTO(savedBook);
+	    return bookMapper.convertToResCreateBookDTO(savedBook);
 	}
 
 	@Override
@@ -237,11 +265,11 @@ public class BookServiceImpl implements BookService {
 	        throw new ResourceNotFoundException("Category not found with ID(s): " + missingIds);
 	    }
 
+	    
 	    // Cập nhật thông tin
-	    Book updatedBook = convertToEntity(dto);
+	    Book updatedBook = bookMapper.convertToEntity(dto, existingBook);
 	    Book savedBook = bookRepository.save(updatedBook);
-
-	    return convertToResUpdateBookDTO(savedBook);
+	    return bookMapper.convertToResUpdateBookDTO(savedBook);
 	}
 
 
@@ -252,172 +280,116 @@ public class BookServiceImpl implements BookService {
 				.orElseThrow(() -> new IdInvalidException("Không tìm thấy danh mục với id = " + intId));
 		bookRepository.delete(book);
 	}
-
-	public ResBookDTO convertToResBookDTO(Book book) {
-		if (book == null)
-			return null;
-
-		ResBookDTO dto = new ResBookDTO();
-		dto.setId(book.getId());
-		dto.setTitle(book.getTitle());
-		dto.setAuthor(book.getAuthor());
-		dto.setPublisher(book.getPublisher());
-		dto.setPublishedDate(book.getPublishedDate());
-		dto.setPageCount(book.getPageCount());
-		dto.setQuantity(book.getQuantity());
-		dto.setPrintType(book.getPrintType());
-		dto.setDescription(book.getDescription());
-		dto.setImageLink(book.getThumbnailUrl());
-		dto.setLanguage(book.getLanguage());
-		dto.setCreatedBy(book.getCreatedBy());
-		dto.setCreatedDate(book.getCreatedDate());
-		dto.setUpdatedBy(book.getUpdatedBy());
-		dto.setUpdatedDate(book.getUpdatedDate());
-
-		List<ResCategoryDTO> categoryDTOs = null;
-		if (book.getCategory() != null) {
-			categoryDTOs = book.getCategory().stream().map(category -> {
-				ResCategoryDTO catDTO = new ResCategoryDTO();
-				catDTO.setId(category.getId());
-				catDTO.setCode(category.getCode());
-				catDTO.setName(category.getName());
-				catDTO.setCreatedBy(category.getCreatedBy());
-				catDTO.setCreatedDate(category.getCreatedDate());
-				catDTO.setUpdatedBy(category.getUpdatedBy());
-				catDTO.setUpdatedDate(category.getUpdatedDate());
-				return catDTO;
-			}).collect(Collectors.toList());
-		}
-		dto.setCategories(categoryDTOs);
-		return dto;
-	}
-
-	public ResCreateBookDTO convertToResCreateBookDTO(Book book) {
-		ResCreateBookDTO res = new ResCreateBookDTO();
-		res.setId(book.getId());
-		res.setTitle(book.getTitle());
-		res.setAuthor(book.getAuthor());
-		res.setPublisher(book.getPublisher());
-		res.setPublishedDate(book.getPublishedDate());
-		res.setPageCount(book.getPageCount());
-		res.setQuantity(book.getQuantity());
-		res.setPrintType(book.getPrintType());
-		res.setDescription(book.getDescription());
-		res.setImageLink(book.getThumbnailUrl());
-		res.setLanguage(book.getLanguage());
-		res.setCreatedBy(book.getCreatedBy());
-		res.setCreatedDate(book.getCreatedDate());
-
-		// Gán danh sách category vào DTO trả về nếu cần
-		List<ResCategoryDTO> categoryDTOs = null;
-		if (book.getCategory() != null) {
-			categoryDTOs = book.getCategory().stream().map(category -> {
-				ResCategoryDTO catDTO = new ResCategoryDTO();
-				catDTO.setId(category.getId());
-				catDTO.setCode(category.getCode());
-				catDTO.setName(category.getName());
-				catDTO.setCreatedBy(category.getCreatedBy());
-				catDTO.setCreatedDate(category.getCreatedDate());
-				catDTO.setUpdatedBy(category.getUpdatedBy());
-				catDTO.setUpdatedDate(category.getUpdatedDate());
-				return catDTO;
-			}).collect(Collectors.toList());
-		}
-		res.setCategories(categoryDTOs);
-		return res;
-	}
 	
-	private ResUpdateBookDTO convertToResUpdateBookDTO(Book book) {
-	    ResUpdateBookDTO dto = new ResUpdateBookDTO();
-
-	    dto.setId(book.getId());
-	    dto.setTitle(book.getTitle());
-	    dto.setAuthor(book.getAuthor());
-	    dto.setPublisher(book.getPublisher());
-	    dto.setPublishedDate(book.getPublishedDate());
-	    dto.setPageCount(book.getPageCount());
-	    dto.setQuantity(book.getQuantity());
-	    dto.setPrintType(book.getPrintType());
-	    dto.setDescription(book.getDescription());
-	    dto.setImageLink(book.getThumbnailUrl());
-	    dto.setLanguage(book.getLanguage());
-	    dto.setUpdatedBy(book.getUpdatedBy());
-	    dto.setUpdatedDate(book.getUpdatedDate());
-
-	    // Map categories
-	    List<ResCategoryDTO> categoryDTOs = null;
-		if (book.getCategory() != null) {
-			categoryDTOs = book.getCategory().stream().map(category -> {
-				ResCategoryDTO catDTO = new ResCategoryDTO();
-				catDTO.setId(category.getId());
-				catDTO.setCode(category.getCode());
-				catDTO.setName(category.getName());
-				catDTO.setCreatedBy(category.getCreatedBy());
-				catDTO.setCreatedDate(category.getCreatedDate());
-				catDTO.setUpdatedBy(category.getUpdatedBy());
-				catDTO.setUpdatedDate(category.getUpdatedDate());
-				return catDTO;
-			}).collect(Collectors.toList());
-		}
-		dto.setCategories(categoryDTOs);
-
-	    return dto;
-	}
-
-
-	public Book convertToEntity(ReqCreateBookDTO dto) {
-		if (dto == null)
-			return null;
-
-		Book book = new Book();
-		book.setTitle(dto.getTitle());
-		book.setAuthor(dto.getAuthor());
-		book.setPublisher(dto.getPublisher());
-		book.setPublishedDate(dto.getPublishedDate());
-		book.setPageCount(dto.getPageCount());
-		book.setQuantity(dto.getQuantity());
-		book.setPrintType(dto.getPrintType());
-		book.setDescription(dto.getDescription());
-		book.setThumbnailUrl(dto.getImageLink());
-		book.setLanguage(dto.getLanguage());
-
-		if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
-			List<Category> categories = dto.getCategoryIds().stream()
-					.map((Integer id) -> categoryRepository.findById(id)
-							.orElseThrow(() -> new RuntimeException("Category not found: " + id)))
-					.collect(Collectors.toList());
-			book.setCategory(categories);
-		}
-
-		return book;
-	}
+	@Override
+    public List<ResCategoryBookStatisticDTO> getCategoryBookStatistics() {
+        return bookRepository.getCategoryBookStatistics();
+    }
 	
-	private Book convertToEntity(ReqUpdateBookDTO dto) {
-	    Book book = bookRepository.findById(dto.getId())
-	        .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + dto.getId()));
+	@Override
+    public List<Book> getAllBooks() {
+        return bookRepository.findAll();
+    }
 
-	    book.setTitle(dto.getTitle());
-	    book.setAuthor(dto.getAuthor());
-	    book.setPublisher(dto.getPublisher());
-	    book.setPublishedDate(dto.getPublishedDate());
-	    book.setPageCount(dto.getPageCount());
-	    book.setQuantity(dto.getQuantity());
-	    book.setPrintType(dto.getPrintType());
-	    book.setDescription(dto.getDescription());
-	    book.setThumbnailUrl(dto.getImageLink());
-	    book.setLanguage(dto.getLanguage());
-	    
-	    if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
-			List<Category> categories = dto.getCategoryIds().stream()
-					.map((Integer id) -> categoryRepository.findById(id)
-							.orElseThrow(() -> new RuntimeException("Category not found: " + id)))
-					.collect(Collectors.toList());
-			book.setCategory(categories);
-		}
-	    
+    @Override
+    public void saveAll(List<Book> books) {
+        bookRepository.saveAll(books);
+    }
+	
+    @Override
+    public ByteArrayInputStream exportBooksToExcel() {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Books");
 
-	    return book;
-	}
+            // Header
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("ID");
+            headerRow.createCell(1).setCellValue("Tên sách");
+            headerRow.createCell(2).setCellValue("Tác giả");
+            headerRow.createCell(3).setCellValue("Thể loại");
+
+            List<Book> books = bookRepository.findAll();
+
+            int rowIdx = 1;
+            for (Book book : books) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(book.getId());
+                row.createCell(1).setCellValue(Optional.ofNullable(book.getTitle()).orElse(""));
+                row.createCell(2).setCellValue(Optional.ofNullable(book.getAuthor()).orElse(""));
+                row.createCell(3).setCellValue(
+                    book.getCategory().stream()
+                        .map(Category::getName)
+                        .collect(Collectors.joining(", "))
+                );
+            }
+
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi export Excel", e);
+        }
+    }
+    
+    @Override
+    public void importBooksFromExcel(MultipartFile file) {
+        try (InputStream inputStream = file.getInputStream()) {
+            Workbook workbook = new XSSFWorkbook(inputStream);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            Iterator<Row> iterator = sheet.iterator();
+            if (iterator.hasNext()) iterator.next(); // Bỏ qua dòng tiêu đề
+
+            while (iterator.hasNext()) {
+                Row row = iterator.next();
+
+                Book book = new Book();
+                book.setTitle(getStringCellValue(row.getCell(1)));
+                book.setAuthor(getStringCellValue(row.getCell(2)));
+                book.setDescription(getStringCellValue(row.getCell(3)));
+
+                // Ngày xuất bản
+                String dateStr = getStringCellValue(row.getCell(4));
+                if (!dateStr.isBlank()) {
+                    Instant publishedInstant = LocalDate.parse(dateStr).atStartOfDay(ZoneId.systemDefault()).toInstant();
+                    book.setPublishedDate(publishedInstant);
+                }
+
+                // Thể loại
+                String categoryStr = getStringCellValue(row.getCell(5));
+                Set<Category> categorySet = new HashSet<>();
+                if (categoryStr != null && !categoryStr.isBlank()) {
+                    String[] categoryNames = categoryStr.split(",");
+                    for (String name : categoryNames) {
+                        String trimmedName = name.trim();
+                        if (!trimmedName.isEmpty()) {
+                            Category category = categoryRepository.findByName(trimmedName)
+                                    .orElseGet(() -> {
+                                        Category newCategory = new Category();
+                                        newCategory.setName(trimmedName);
+                                        return categoryRepository.save(newCategory);
+                                    });
+                            categorySet.add(category);
+                        }
+                    }
+                }
+
+
+                book.setCategory(new ArrayList<>(categorySet));
+                bookRepository.save(book);
+            }
+
+            workbook.close();
+        } catch (IOException | IllegalArgumentException e) {
+            throw new RuntimeException("Lỗi khi đọc file Excel: " + e.getMessage(), e);
+        }
+    }
+
+    private String getStringCellValue(Cell cell) {
+        if (cell == null) return "";
+        cell.setCellType(CellType.STRING);
+        return cell.getStringCellValue().trim();
+    }
 
 
 }

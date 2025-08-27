@@ -3,6 +3,7 @@ package com.vtit.service.impl;
 import java.time.Instant;
 import java.util.Optional;
 
+import org.springframework.security.core.Transient;
 import org.springframework.stereotype.Service;
 
 import com.vtit.dto.response.post.ResPostReactionDTO;
@@ -20,6 +21,7 @@ import com.vtit.utils.IdValidator;
 import com.vtit.utils.SecurityUtil;
 
 @Service
+@Transient
 public class PostReactionServiceImpl implements PostReactionService {
 
 	private final PostReactionRepository postReactionRepository;
@@ -44,7 +46,7 @@ public class PostReactionServiceImpl implements PostReactionService {
 
 		Post post = postRepository.findById(postIdInt)
 				.orElseThrow(() -> new ResourceNotFoundException("Post not found"));
-		Users user = userRepository.findByEmail(securityUtil.getCurrentUserLogin().get());
+		Users user = userRepository.findByUsername(securityUtil.getCurrentUserLogin().get());
 
 		Optional<PostReaction> existing = postReactionRepository.findByPostAndUser(post, user);
 		if (existing.isPresent()) {
@@ -63,11 +65,13 @@ public class PostReactionServiceImpl implements PostReactionService {
 			newReaction.setCreatedAt(Instant.now());
 			postReactionRepository.save(newReaction);
 		}
+		
+		Optional<PostReaction> currentReaction = postReactionRepository.findByPostAndUser(post, user);
 		ResPostReactionDTO postSummary = new ResPostReactionDTO();
 		postSummary.setId(post.getId());
 		postSummary.setContent(post.getContent());
 		postSummary.setAuthorName(post.getUser().getFullname());
-		postSummary.setReactionType(reactionType.toUpperCase());
+		postSummary.setReactionType(currentReaction.isPresent() ? currentReaction.get().getReactionType() : null);
 		return postSummary;
 	}
 
@@ -79,9 +83,6 @@ public class PostReactionServiceImpl implements PostReactionService {
 		long likes = postReactionRepository.countByPostAndReactionType(post, "LIKE");
 		long dislikes = postReactionRepository.countByPostAndReactionType(post, "DISLIKE");
 		ReactionSummaryDTO reactionSummary = new ReactionSummaryDTO();
-		reactionSummary.setPostId(postIdInt);
-		reactionSummary.setPostTitle(post.getTitle() != null ? post.getTitle() : "No Title");
-		reactionSummary.setAuthorName(post.getUser().getFullname() != null ? post.getUser().getFullname() : "Unknown Author");
 		reactionSummary.setLikeCount(likes);
 		reactionSummary.setDislikeCount(dislikes);
 		

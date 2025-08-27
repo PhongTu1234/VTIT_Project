@@ -2,8 +2,8 @@ package com.vtit.entity;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -13,60 +13,51 @@ import com.vtit.utils.CustomInstantDeserializer;
 import com.vtit.utils.CustomInstantSerializer;
 import com.vtit.utils.SecurityUtil;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
-import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@SuppressWarnings("serial")
-@Data
 @Entity
-@Table(name = "Users", uniqueConstraints = {
-	    @UniqueConstraint(columnNames = "email")
-	})
+@Getter @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Table(name = "Users", uniqueConstraints = @UniqueConstraint(columnNames = "email"))
 public class Users implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true, length = 50)
     @NotBlank(message = "Username không được để trống")
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
 
     @Column(nullable = false, length = 255)
-    @NotBlank(message = "Password không được để trống")
     private String password;
 
     @Column(length = 100)
     private String fullname;
 
-    @Column(length = 100)
     @Email(message = "Email không đúng định dạng")
+    @Column(length = 100, unique = true)
     private String email;
 
+    @Size(max = 20, message = "Số điện thoại không được vượt quá 20 ký tự")
+    @Pattern(regexp = "^[0-9+()\\-\\s]*$", message = "Số điện thoại không hợp lệ")
     @Column(length = 20)
     private String phone;
 
     @Column(length = 255)
     private String address;
-    
+
     @Column(columnDefinition = "MEDIUMTEXT")
     private String refreshToken;
 
@@ -74,15 +65,17 @@ public class Users implements Serializable {
     @JsonDeserialize(using = CustomInstantDeserializer.class)
     private Instant birthday;
 
-    @Column(name = "created_date")
+    private String avatar;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")
+    @Column(name = "created_date")
     private Instant createdDate;
 
     @Column(name = "created_by", length = 50)
     private String createdBy;
 
-    @Column(name = "updated_date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")
+    @Column(name = "updated_date")
     private Instant updatedDate;
 
     @Column(name = "updated_by", length = 50)
@@ -91,35 +84,38 @@ public class Users implements Serializable {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @PrePersist //Trước khi lưu mới (INSERT)
+    @PrePersist
     protected void onCreate() {
-    	this.createdBy = SecurityUtil.getCurrentUserLogin().isPresent() == true ?
-    			SecurityUtil.getCurrentUserLogin().get() : "";
+        this.createdBy = SecurityUtil.getCurrentUserLogin().orElse("");
         this.createdDate = Instant.now();
-        if (isActive == null) isActive = true;
+        if (isActive == null) {
+            isActive = true;
+        }
     }
 
-    @PreUpdate //Trước khi cập nhật (UPDATE)
+    @PreUpdate
     protected void onUpdate() {
-    	this.updatedBy = SecurityUtil.getCurrentUserLogin().isPresent() == true ?
-    			SecurityUtil.getCurrentUserLogin().get() : "";
+        this.updatedBy = SecurityUtil.getCurrentUserLogin().orElse("");
         this.updatedDate = Instant.now();
     }
-    
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) //xóa trong List Java = xóa trong DB
+
+    // Quan hệ với Borrowing
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Borrowing> borrowings;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) //xóa trong List Java = xóa trong DB
+    // Quan hệ với Post
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Post> posts;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true) //xóa trong List Java = xóa trong DB
+    // Quan hệ với Comment
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Comment> comments;
-    
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JsonIgnore
-    @JoinTable(name = "User_Role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private List<Roles> user_Role;
+
+    // Quan hệ với Role (mỗi user chỉ có 1 role)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id")
+    private Roles role;
 }

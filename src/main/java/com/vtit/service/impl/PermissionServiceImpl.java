@@ -1,6 +1,5 @@
 package com.vtit.service.impl;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +18,7 @@ import com.vtit.entity.Permission;
 import com.vtit.exception.DuplicateResourceException;
 import com.vtit.exception.IdInvalidException;
 import com.vtit.exception.ResourceNotFoundException;
+import com.vtit.mapper.PermissionMapper;
 import com.vtit.reponsitory.PermissionRepository;
 import com.vtit.service.PermissionService;
 import com.vtit.utils.IdValidator;
@@ -27,9 +27,11 @@ import com.vtit.utils.IdValidator;
 public class PermissionServiceImpl implements PermissionService {
 
     private final PermissionRepository permissionRepository;
+    private final PermissionMapper permissionMapper;
 
-    public PermissionServiceImpl(PermissionRepository permissionRepository) {
+    public PermissionServiceImpl(PermissionRepository permissionRepository, PermissionMapper permissionMapper) {
         this.permissionRepository = permissionRepository;
+        this.permissionMapper = permissionMapper;
     }
 
     @Override
@@ -37,7 +39,7 @@ public class PermissionServiceImpl implements PermissionService {
         Page<Permission> pagePermission = permissionRepository.findAll(spec, pageable);
 
         List<ResPermissionDTO> permissionDTOs = pagePermission.getContent().stream()
-            .map(this::convertToResPermissionDTO)
+            .map(permissionMapper::toResPermissionDTO)
             .collect(Collectors.toList());
 
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
@@ -58,38 +60,37 @@ public class PermissionServiceImpl implements PermissionService {
         Integer idInt = IdValidator.validateAndParse(id);
         Permission permission = permissionRepository.findById(idInt)
             .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy permission với id = " + idInt));
-        return convertToResPermissionDTO(permission);
+        return permissionMapper.toResPermissionDTO(permission);
     }
 
     @Override
     public ResCreatePermissionDTO create(ReqCreatePermissionDTO dto) {
-        if (permissionRepository.existsByCode(dto.getCode())) {
-            throw new DuplicateResourceException("Code '" + dto.getCode() + "' đã tồn tại");
+        if (permissionRepository.existsByCodeAndMethodAndModule(dto.getCode(), dto.getMethod(), dto.getModule())) {
+            throw new DuplicateResourceException("Permission đã tồn tại");
         }
 
-        Permission permission = new Permission();
-        permission.setCode(dto.getCode());
-        permission.setName(dto.getName());
-
+        Permission permission = permissionMapper.fromCreateDTO(dto);
         Permission saved = permissionRepository.save(permission);
-        return convertToResCreatePermissionDTO(saved);
+        return permissionMapper.toResCreatePermissionDTO(saved);
     }
 
     @Override
     public ResUpdatePermissionDTO update(ReqUpdatePermissionDTO dto) {
-        Permission permission = permissionRepository.findById(dto.getId())
+        Permission existing = permissionRepository.findById(dto.getId())
             .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy permission với id = " + dto.getId()));
 
-        if (dto.getCode() != null && !dto.getCode().equals(permission.getCode()) &&
-            permissionRepository.existsByCode(dto.getCode())) {
-            throw new DuplicateResourceException("Code '" + dto.getCode() + "' đã tồn tại");
+        if (dto.getCode() != null && !dto.getCode().equals(existing.getCode()) &&
+            permissionRepository.existsByCodeAndMethodAndModule(dto.getCode(), dto.getMethod(), dto.getModule())) {
+            throw new DuplicateResourceException("Permission đã tồn tại");
         }
 
-        permission.setCode(dto.getCode());
-        permission.setName(dto.getName());
+        existing.setCode(dto.getCode());
+        existing.setName(dto.getName());
+        existing.setMethod(dto.getMethod());
+        existing.setModule(dto.getModule());
 
-        Permission updated = permissionRepository.save(permission);
-        return convertToResUpdatePermissionDTO(updated);
+        Permission updated = permissionRepository.save(existing);
+        return permissionMapper.toResUpdatePermissionDTO(updated);
     }
 
     @Override
@@ -99,51 +100,4 @@ public class PermissionServiceImpl implements PermissionService {
             .orElseThrow(() -> new IdInvalidException("Không tìm thấy permission với id = " + idInt));
         permissionRepository.delete(permission);
     }
-
-
-    private ResPermissionDTO convertToResPermissionDTO(Permission permission) {
-        ResPermissionDTO dto = new ResPermissionDTO();
-        dto.setId(permission.getId());
-        dto.setCode(permission.getCode());
-        dto.setName(permission.getName());
-        dto.setCreatedDate(permission.getCreatedDate());
-        dto.setCreatedBy(permission.getCreatedBy());
-        dto.setUpdatedDate(permission.getUpdatedDate());
-        dto.setUpdatedBy(permission.getUpdatedBy());
-        return dto;
-    }
-
-    private ResCreatePermissionDTO convertToResCreatePermissionDTO(Permission permission) {
-        ResCreatePermissionDTO dto = new ResCreatePermissionDTO();
-        dto.setId(permission.getId());
-        dto.setCode(permission.getCode());
-        dto.setName(permission.getName());
-        dto.setCreatedDate(permission.getCreatedDate());
-        dto.setCreatedBy(permission.getCreatedBy());
-        return dto;
-    }
-
-    private ResUpdatePermissionDTO convertToResUpdatePermissionDTO(Permission permission) {
-        ResUpdatePermissionDTO dto = new ResUpdatePermissionDTO();
-        dto.setId(permission.getId());
-        dto.setCode(permission.getCode());
-        dto.setName(permission.getName());
-        dto.setUpdatedDate(permission.getUpdatedDate());
-        dto.setUpdatedBy(permission.getUpdatedBy());
-        return dto;
-    }
-    public Permission convertToEntity(ReqCreatePermissionDTO dto) {
-        Permission permission = new Permission();
-        permission.setCode(dto.getCode());
-        permission.setName(dto.getName());
-        return permission;
-    }
-    public Permission convertToEntity(ReqUpdatePermissionDTO dto) {
-        Permission permission = new Permission();
-        permission.setId(dto.getId());
-        permission.setCode(dto.getCode());
-        permission.setName(dto.getName());
-        return permission;
-    }
-
 }

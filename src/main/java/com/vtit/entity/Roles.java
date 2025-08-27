@@ -1,45 +1,40 @@
 package com.vtit.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.vtit.utils.SecurityUtil;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
+import jakarta.persistence.*;
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
-@SuppressWarnings("serial")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "Roles")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Roles implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true, length = 50)
-    private String code;
-
-    @Column(length = 100)
+    @Column(length = 100, nullable = false, unique = true)
     private String name;
+
+    private String descriptions;
 
     @Column(name = "created_date")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss a", timezone = "GMT+7")
@@ -61,28 +56,32 @@ public class Roles implements Serializable {
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
-    @PrePersist //Trước khi lưu mới (INSERT)
+    @PrePersist
     protected void onCreate() {
-    	this.createdBy = SecurityUtil.getCurrentUserLogin().isPresent() == true ?
-    			SecurityUtil.getCurrentUserLogin().get() : "";
+        this.createdBy = SecurityUtil.getCurrentUserLogin().orElse("");
         this.createdDate = Instant.now();
         if (isActive == null) isActive = true;
         if (isDeleted == null) isDeleted = false;
     }
 
-    @PreUpdate //Trước khi cập nhật (UPDATE)
+    @PreUpdate
     protected void onUpdate() {
-    	this.updatedBy = SecurityUtil.getCurrentUserLogin().isPresent() == true ?
-    			SecurityUtil.getCurrentUserLogin().get() : "";
+        this.updatedBy = SecurityUtil.getCurrentUserLogin().orElse("");
         this.updatedDate = Instant.now();
     }
-    
-    @OneToMany(mappedBy = "user_Role", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Users> user;
-    
-    @OneToMany(mappedBy = "role_Permission", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Permission> permission;
-}
 
+    // 1 role có nhiều user
+    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<Users> users;
+
+    // Role - Permission (N-N)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "Role_Permission",
+        joinColumns = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private Set<Permission> permissions = new HashSet<>();
+
+}

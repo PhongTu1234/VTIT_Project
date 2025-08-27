@@ -9,8 +9,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,10 +29,13 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
+import com.vtit.security.CustomAccessDeniedHandler;
 import com.vtit.utils.SecurityUtil;
 
 @Configuration
-@EnableMethodSecurity
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+//@EnableGlobalMethodSecurity(prePostEnabled = true) // bật PreAuthorize
 public class SecurityConfig {
 
 	@Value("${jwt.secret}")
@@ -43,16 +48,20 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http,
-			CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
+			CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+			CustomAccessDeniedHandler accessDeniedHandler) throws Exception {
 		http
 			.csrf().disable()
 			.cors(Customizer.withDefaults())
 			.authorizeHttpRequests(
 
-					auth -> auth.requestMatchers("/", "/api/v1/auth/login", "/api/v1/users", "/api/v1/auth/refresh-token").permitAll().anyRequest().authenticated())
+					auth -> auth.requestMatchers("/", "/api/v1/auth/login", "/api/v1/users", "/api/v1/auth/refresh-token","/storage/**").permitAll().anyRequest().authenticated())
 			.oauth2ResourceServer((oauth2) -> oauth2.
 					jwt(Customizer.withDefaults())
 					.authenticationEntryPoint(customAuthenticationEntryPoint))
+			.exceptionHandling(ex -> ex
+		            .accessDeniedHandler(accessDeniedHandler)
+		        )
 //				.exceptionHandling(
 //						exceptions -> exceptions.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
 //								.accessDeniedHandler(new BearerTokenAccessDeniedHandler()))
@@ -64,13 +73,13 @@ public class SecurityConfig {
 	
 	@Bean
 	public JwtAuthenticationConverter jwtAuthenticationConverter() {
-		JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-		grantedAuthoritiesConverter.setAuthorityPrefix("");
-		grantedAuthoritiesConverter.setAuthoritiesClaimName("permission");
-		
-		JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-		jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-		return jwtAuthenticationConverter;
+	    JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+	    grantedAuthoritiesConverter.setAuthorityPrefix("");
+	    grantedAuthoritiesConverter.setAuthoritiesClaimName("permission"); // ✅ lấy từ claim "permission"
+	    
+	    JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+	    jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+	    return jwtAuthenticationConverter;
 	}
 
 	@Bean

@@ -1,138 +1,184 @@
 package com.vtit.service.impl;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import com.vtit.dto.common.ResultPaginationDTO;
 import com.vtit.dto.request.User.ReqCreateUserDTO;
 import com.vtit.dto.request.User.ReqUpdateUserDTO;
 import com.vtit.dto.response.User.ResCreateUserDTO;
 import com.vtit.dto.response.User.ResUpdateUserDTO;
 import com.vtit.dto.response.User.ResUserDTO;
+import com.vtit.entity.Roles;
 import com.vtit.entity.Users;
 import com.vtit.exception.DuplicateResourceException;
 import com.vtit.exception.IdInvalidException;
 import com.vtit.exception.ResourceNotFoundException;
+import com.vtit.mapper.UserMapper;
+import com.vtit.reponsitory.RoleRepository;
 import com.vtit.reponsitory.UserRepository;
+import com.vtit.service.FileService;
 import com.vtit.service.UserService;
 import com.vtit.utils.IdValidator;
 import com.vtit.utils.SecurityUtil;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URISyntaxException;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 @Service
+//@Transactional
 public class UserServiceImpl implements UserService {
+
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final SecurityUtil securityUtil;
+	private final FileService fileService;
+	private final UserMapper userMapper;
+	private final RoleRepository roleRepository;
 
-	public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, SecurityUtil securityUtil) {
+	public UserServiceImpl(UserRepository userRepository,
+	                       PasswordEncoder passwordEncoder,
+	                       SecurityUtil securityUtil,
+	                       FileService fileService,
+	                       UserMapper userMapper,
+	                       RoleRepository roleRepository) {
 		this.userRepository = userRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.securityUtil = securityUtil;
+		this.fileService = fileService;
+		this.userMapper = userMapper;
+		this.roleRepository = roleRepository;
 	}
 
 	@Override
 	public ResultPaginationDTO findAll(Specification<Users> spec, Pageable pageable) {
 		Page<Users> pageUser = userRepository.findAll(spec, pageable);
-
 		List<ResUserDTO> userDTOs = pageUser.getContent().stream()
-			.map(this::convertToResUserDTO)
-			.collect(Collectors.toList());
+				.map(userMapper::convertToResUserDTO)
+				.collect(Collectors.toList());
 
-		ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
-		meta.setPage(pageable.getPageNumber() + 1);
-		meta.setPageSize(pageable.getPageSize());
-		meta.setPages(pageUser.getTotalPages());
-		meta.setTotals((int) pageUser.getTotalElements());
+		ResultPaginationDTO.Meta meta = createPaginationMeta(pageUser, pageable);
 
 		ResultPaginationDTO result = new ResultPaginationDTO();
 		result.setMeta(meta);
 		result.setResult(userDTOs);
-
 		return result;
+	}
+
+	private ResultPaginationDTO.Meta createPaginationMeta(Page<?> page, Pageable pageable) {
+		ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+		meta.setPage(pageable.getPageNumber() + 1);
+		meta.setPageSize(pageable.getPageSize());
+		meta.setPages(page.getTotalPages());
+		meta.setTotals((int) page.getTotalElements());
+		return meta;
 	}
 
 	@Override
 	public ResUserDTO findById(String id) {
 		Integer idInt = IdValidator.validateAndParse(id);
 		Users user = userRepository.findById(idInt)
-			.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với id = " + idInt));
-		return convertToResUserDTO(user);
+				.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với id = " + idInt));
+		return userMapper.convertToResUserDTO(user);
 	}
 
 	@Override
-	public ResCreateUserDTO create(ReqCreateUserDTO user) {
-		// Kiểm tra trùng username
-		if (userRepository.existsByUsername(user.getUsername())) {
-			throw new DuplicateResourceException("Username '" + user.getUsername() + "' đã tồn tại");
-		}
-		// Kiểm tra trùng email
-		if (user.getEmail() != null && userRepository.existsByEmail(user.getEmail())) {
-			throw new DuplicateResourceException("Email '" + user.getEmail() + "' đã tồn tại");
-		}
-		// Kiểm tra trùng phone
-		if (user.getPhone() != null && userRepository.existsByPhone(user.getPhone())) {
-			throw new DuplicateResourceException("Phone '" + user.getPhone() + "' đã tồn tại");
+	public ResCreateUserDTO create(ReqCreateUserDTO dto, MultipartFile avatar) throws Exception {
+		validateDuplicate(dto.getUsername(), dto.getEmail(), dto.getPhone());
+
+		dto.setPassword(passwordEncoder.encode(dto.getPassword()));
+		Users entity = userMapper.convertToEntity(dto);
+
+		String avatarFileName = null;
+		if (avatar != null && !avatar.isEmpty()) {
+			avatarFileName = fileService.generateFileName(avatar);
+			entity.setAvatar(avatarFileName);
 		}
 
-		user.setPassword(passwordEncoder.encode(user.getPassword()));
-		Users userDB = userRepository.save(convertToEntity(user));
-		return convertToResCreateUserDTO(userDB);
+		Users savedUser = userRepository.save(entity);
+
+		try {
+			if (avatarFileName != null) {
+				fileService.createDirectory("avatars");
+				fileService.store(avatar, "avatars", avatarFileName);
+			}
+			return userMapper.convertToResCreateUserDTO(savedUser);
+		} catch (Exception e) {
+			userRepository.deleteById(savedUser.getId());
+			throw new RuntimeException("Đã xảy ra lỗi khi lưu avatar. Dữ liệu đã được rollback.", e);
+		}
 	}
 
 	@Override
-	public ResUpdateUserDTO update(ReqUpdateUserDTO updatedUser) {
-		Users existingUser = userRepository.findById(updatedUser.getId())
-			.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với id = " + updatedUser.getId()));
+	public ResUpdateUserDTO update(ReqUpdateUserDTO dto, MultipartFile avatar) throws Exception {
+		Users user = userRepository.findById(dto.getId())
+				.orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với id = " + dto.getId()));
 
-		// Kiểm tra trùng thông tin
-		if (updatedUser.getUsername() != null &&
-			userRepository.existsByUsernameAndIdNot(updatedUser.getUsername(), updatedUser.getId())) {
-			throw new DuplicateResourceException("Username '" + updatedUser.getUsername() + "' đã tồn tại");
-		}
-		if (updatedUser.getEmail() != null &&
-			userRepository.existsByEmailAndIdNot(updatedUser.getEmail(), updatedUser.getId())) {
-			throw new DuplicateResourceException("Email '" + updatedUser.getEmail() + "' đã tồn tại");
-		}
-		if (updatedUser.getPhone() != null &&
-			userRepository.existsByPhoneAndIdNot(updatedUser.getPhone(), updatedUser.getId())) {
-			throw new DuplicateResourceException("Phone '" + updatedUser.getPhone() + "' đã tồn tại");
-		}
+		validateDuplicate(dto.getUsername(), dto.getEmail(), dto.getPhone(), dto.getId());
 
-		// Cập nhật mật khẩu nếu có
-		if (updatedUser.getPassword() != null && !updatedUser.getPassword().isBlank()) {
-			existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+		String oldAvatar = user.getAvatar();
+		String newAvatarFileName = null;
+
+		if (avatar != null && !avatar.isEmpty()) {
+			String extension = "";
+			String originalFilename = avatar.getOriginalFilename();
+			if (originalFilename != null && originalFilename.contains(".")) {
+				extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+			}
+			newAvatarFileName = UUID.randomUUID().toString() + extension;
+			user.setAvatar(newAvatarFileName);
 		}
 
-		// Cập nhật thông tin
-		if (updatedUser.getUsername() != null) existingUser.setUsername(updatedUser.getUsername());
-		if (updatedUser.getFullname() != null) existingUser.setFullname(updatedUser.getFullname());
-		if (updatedUser.getEmail() != null) existingUser.setEmail(updatedUser.getEmail());
-		if (updatedUser.getPhone() != null) existingUser.setPhone(updatedUser.getPhone());
-		if (updatedUser.getAddress() != null) existingUser.setAddress(updatedUser.getAddress());
-		if (updatedUser.getBirthday() != null) existingUser.setBirthday(updatedUser.getBirthday());
+		String encodedPassword = StringUtils.hasText(dto.getPassword())
+				? passwordEncoder.encode(dto.getPassword())
+				: null;
 
-		userRepository.save(existingUser);
-		return convertToResUpdateUserDTO(existingUser);
+		userMapper.updateEntityFromDTO(user, dto, encodedPassword, newAvatarFileName);
+
+		try {
+			userRepository.save(user);
+
+			if (newAvatarFileName != null) {
+				fileService.createDirectory("avatars");
+				fileService.store(avatar, "avatars", newAvatarFileName);
+			}
+
+			if (newAvatarFileName != null && oldAvatar != null && !oldAvatar.equals(newAvatarFileName)) {
+				fileService.deleteFile("avatars", oldAvatar);
+			}
+
+			return userMapper.convertToResUpdateUserDTO(user);
+
+		} catch (Exception e) {
+			if (newAvatarFileName != null) {
+				fileService.deleteFile("avatars", newAvatarFileName);
+				user.setAvatar(oldAvatar);
+				userRepository.save(user);
+			}
+			throw e;
+		}
 	}
 
 	@Override
 	public void delete(String id) {
 		Integer idInt = IdValidator.validateAndParse(id);
 		Users user = userRepository.findById(idInt)
-			.orElseThrow(() -> new IdInvalidException("Không tìm thấy người dùng với id = " + idInt));
+				.orElseThrow(() -> new IdInvalidException("Không tìm thấy người dùng với id = " + idInt));
 		userRepository.delete(user);
 	}
 
 	@Override
-	public Users handleGetUserByUsername(String username) {
-		return userRepository.findByEmail(username);
+	public Users handleGetUserByUsername(String email) {
+		return userRepository.findByEmail(email);
 	}
 
 	@Override
@@ -154,73 +200,42 @@ public class UserServiceImpl implements UserService {
 		return userRepository.findByRefreshTokenAndEmail(refreshToken, email);
 	}
 
-	public ResCreateUserDTO convertToResCreateUserDTO(Users user) {
-		ResCreateUserDTO dto = new ResCreateUserDTO();
-		dto.setId(user.getId());
-		dto.setUsername(user.getUsername());
-		dto.setEmail(user.getEmail());
-		dto.setFullname(user.getFullname());
-		dto.setPhone(user.getPhone());
-		dto.setAddress(user.getAddress());
-		dto.setBirthday(user.getBirthday());
-		dto.setCreateAt(user.getCreatedDate());
-		dto.setCreateBy(user.getCreatedBy());
-		return dto;
+	private void validateDuplicate(String username, String email, String phone) {
+		if (userRepository.existsByUsername(username)) {
+			throw new DuplicateResourceException("Username '" + username + "' đã tồn tại");
+		}
+		if (email != null && userRepository.existsByEmail(email)) {
+			throw new DuplicateResourceException("Email '" + email + "' đã tồn tại");
+		}
+		if (phone != null && userRepository.existsByPhone(phone)) {
+			throw new DuplicateResourceException("Phone '" + phone + "' đã tồn tại");
+		}
 	}
 
-	public ResUserDTO convertToResUserDTO(Users user) {
-		ResUserDTO dto = new ResUserDTO();
-		dto.setId(user.getId());
-		dto.setUsername(user.getUsername());
-		dto.setEmail(user.getEmail());
-		dto.setFullname(user.getFullname());
-		dto.setPhone(user.getPhone());
-		dto.setAddress(user.getAddress());
-		dto.setBirthday(user.getBirthday());
-		dto.setCreatedBy(user.getCreatedBy());
-		dto.setCreateAt(user.getCreatedDate());
-		dto.setUpdatedBy(user.getUpdatedBy());
-		dto.setUpdateAt(user.getUpdatedDate());
-		return dto;
-	}
-
-	public ResUpdateUserDTO convertToResUpdateUserDTO(Users user) {
-		ResUpdateUserDTO dto = new ResUpdateUserDTO();
-		dto.setId(user.getId());
-		dto.setUsername(user.getUsername());
-		dto.setFullname(user.getFullname());
-		dto.setEmail(user.getEmail());
-		dto.setPhone(user.getPhone());
-		dto.setAddress(user.getAddress());
-		dto.setBirthday(user.getBirthday());
-		dto.setUpdatedAt(user.getUpdatedDate());
-		dto.setUpdateBy(user.getUpdatedBy());
-		return dto;
+	private void validateDuplicate(String username, String email, String phone, Integer id) {
+		if (username != null && userRepository.existsByUsernameAndIdNot(username, id)) {
+			throw new DuplicateResourceException("Username '" + username + "' đã tồn tại");
+		}
+		if (email != null && userRepository.existsByEmailAndIdNot(email, id)) {
+			throw new DuplicateResourceException("Email '" + email + "' đã tồn tại");
+		}
+		if (StringUtils.hasText(phone) && userRepository.existsByPhoneAndIdNot(phone, id)) {
+			throw new DuplicateResourceException("Phone '" + phone + "' đã tồn tại");
+		}
 	}
 	
-	public Users convertToEntity(ReqCreateUserDTO dto) {
-	    Users user = new Users();
-	    user.setUsername(dto.getUsername());
-	    user.setPassword(dto.getPassword());
-	    user.setFullname(dto.getFullname());
-	    user.setEmail(dto.getEmail());
-	    user.setPhone(dto.getPhone());
-	    user.setAddress(dto.getAddress());
-	    user.setBirthday(dto.getBirthday());
-	    user.setRefreshToken(null);
-	    return user;
-	}
+	@Override
+	public Users handleGetUserByUsernamea(String login) {
+	    Users user = userRepository.findUserWithRolesAndPermissions(login)
+	            .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
 
-	public Users convertToEntity(ReqUpdateUserDTO dto) {
-	    Users user = new Users();
-	    user.setId(dto.getId());
-	    user.setUsername(dto.getUsername());
-	    user.setPassword(dto.getPassword());
-	    user.setFullname(dto.getFullname());
-	    user.setEmail(dto.getEmail());
-	    user.setPhone(dto.getPhone());
-	    user.setAddress(dto.getAddress());
-	    user.setBirthday(dto.getBirthday());
+	    	System.out.println("Permissions size = " + user.getRole().getPermissions().size());
+	    	user.getRole().getPermissions().forEach(p -> System.out.println(">> " + p.getCode()));
+
+	    
+	    // Chỉ cần đảm bảo permissions được load
+	    user.getRole().getPermissions().size();
+
 	    return user;
 	}
 

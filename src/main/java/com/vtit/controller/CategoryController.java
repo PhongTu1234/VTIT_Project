@@ -4,6 +4,7 @@ import org.apache.http.HttpStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +23,7 @@ import com.vtit.dto.response.category.ResCreateCategoryDTO;
 import com.vtit.dto.response.category.ResUpdateCategoryDTO;
 import com.vtit.entity.Category;
 import com.vtit.service.CategoryService;
+import com.vtit.utils.annotation.ApiMessage;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -37,26 +39,36 @@ public class CategoryController {
 	}
 	
 	@GetMapping
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
+	@ApiMessage("Fresh all Categories")
 	public ResponseEntity<ResultPaginationDTO> getAll(@Filter Specification<Category> spec, Pageable pageable){
 		return ResponseEntity.ok(categoryService.findAll(spec, pageable));
 	}
 	
 	@GetMapping("/{id}")
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
+	@ApiMessage("Get Category by id")
     public ResponseEntity<ResCategoryDTO> getById(@PathVariable String id) {
         return ResponseEntity.ok(categoryService.findById(id));
     }
 	
 	@PostMapping
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
+	@ApiMessage("Create new Category")
     public ResponseEntity<ResCreateCategoryDTO> create(@Valid @RequestBody ReqCreateCategoryDTO dto) {
         return ResponseEntity.status(HttpStatus.SC_CREATED).body(categoryService.create(dto));
     }
 	
-	@PutMapping()
+	@PutMapping
+	@PreAuthorize("@customPermissionEvaluator.check(authentication)")
+	@ApiMessage("Update a Category")
     public ResponseEntity<ResUpdateCategoryDTO> update(@Valid @RequestBody ReqUpdateCategoryDTO dto) {
         return ResponseEntity.ok(categoryService.update(dto));
     }
     
     @DeleteMapping("/{id}")
+    @PreAuthorize("@customPermissionEvaluator.check(authentication)")
+    @ApiMessage("Delete a Category")
     public void delete(@PathVariable String id) {
     	categoryService.delete(id);
     }
